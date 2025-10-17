@@ -23,7 +23,7 @@ desktop.ini
 _ReSharper.Caches/
 *_Resharper.*
 
-# VS Code (giữ lại cấu hình dùng chung)
+# VS Code (giữ lại cấu hình cần thiết)
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
@@ -31,27 +31,28 @@ _ReSharper.Caches/
 !.vscode/launch.json
 
 ############################################
-# ⚙️ Build / Restore
+# ⚙️ Build / Restore (áp dụng cho BackEnd/)
 ############################################
-**/bin/
-**/obj/
-**/out/
-artifacts/
+BackEnd/**/bin/
+BackEnd/**/obj/
+BackEnd/**/out/
+BackEnd/**/artifacts/
+
 # NuGet
-*.nupkg
-*.snupkg
-packages/
+BackEnd/**/*.nupkg
+BackEnd/**/*.snupkg
+BackEnd/**/packages/
 project.lock.json
 project.fragment.lock.json
-**/obj/project.assets.json
-**/obj/project.nuget.cache
+BackEnd/**/obj/project.assets.json
+BackEnd/**/obj/project.nuget.cache
 *.nuget.g.props
 *.nuget.g.targets
 
 ############################################
 # 🧪 Test / Coverage
 ############################################
-TestResults/
+BackEnd/**/TestResults/
 *.trx
 coverage/
 coverage*.json
@@ -63,8 +64,8 @@ coverage*.info
 ############################################
 # 🚀 Publish
 ############################################
-publish/
-**/Properties/PublishProfiles/*.pubxml.user
+BackEnd/**/publish/
+BackEnd/**/Properties/PublishProfiles/*.pubxml.user
 
 ############################################
 # 🧾 Logs
@@ -76,12 +77,12 @@ Serilog*.log
 ############################################
 # 🔒 Secrets / cấu hình cục bộ
 ############################################
-# Giữ appsettings.example.json nếu có
-!**/appsettings.example.json
+# Giữ appsettings.example.json (file mẫu)
+!BackEnd/**/appsettings.example.json
 
-# Không commit bất kỳ appsettings thật nào
-**/appsettings.json
-**/appsettings.*.json
+# Không commit bất kỳ file cấu hình thật nào
+BackEnd/**/appsettings.json
+BackEnd/**/appsettings.*.json
 
 # Biến môi trường / user secrets
 .env
@@ -91,21 +92,21 @@ secrets.json
 *.csproj.user
 
 ############################################
-# 🌐 HTTP scratch
+# 🌐 HTTP scratch (REST client)
 ############################################
 *.rest
 
 ############################################
-# 🍃 MongoDB data / dumps
+# 🍃 MongoDB data / dumps (local)
 ############################################
 /data/
-data/db/
-dump/
+BackEnd/**/data/db/
+BackEnd/**/dump/
 *.bson
 *.mongodump
 
 ############################################
-# 🧹 Tạp nham
+# 🧹 Tạp nham / file tạm
 ############################################
 *.bak
 *.tmp
