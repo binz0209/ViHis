@@ -1,0 +1,116 @@
+############################################
+# 🧩 OS chung
+############################################
+.DS_Store
+Thumbs.db
+desktop.ini
+
+############################################
+# 💻 IDE / Editor
+############################################
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.rsuser
+*.sln.docstates
+
+# Rider / ReSharper
+.idea/
+*.iml
+*.DotSettings.user
+_ReSharper.Caches/
+*_Resharper.*
+
+# VS Code (giữ lại cấu hình dùng chung)
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+############################################
+# ⚙️ Build / Restore
+############################################
+**/bin/
+**/obj/
+**/out/
+artifacts/
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+**/obj/project.assets.json
+**/obj/project.nuget.cache
+*.nuget.g.props
+*.nuget.g.targets
+
+############################################
+# 🧪 Test / Coverage
+############################################
+TestResults/
+*.trx
+coverage/
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+
+############################################
+# 🚀 Publish
+############################################
+publish/
+**/Properties/PublishProfiles/*.pubxml.user
+
+############################################
+# 🧾 Logs
+############################################
+*.log
+logs/
+Serilog*.log
+
+############################################
+# 🔒 Secrets / cấu hình cục bộ
+############################################
+# Giữ appsettings.example.json nếu có
+!**/appsettings.example.json
+
+# Không commit bất kỳ appsettings thật nào
+**/appsettings.json
+**/appsettings.*.json
+
+# Biến môi trường / user secrets
+.env
+.env.*.local
+.env.local
+secrets.json
+*.csproj.user
+
+############################################
+# 🌐 HTTP scratch
+############################################
+*.rest
+
+############################################
+# 🍃 MongoDB data / dumps
+############################################
+/data/
+data/db/
+dump/
+*.bson
+*.mongodump
+
+############################################
+# 🧹 Tạp nham
+############################################
+*.bak
+*.tmp
+*.orig
+*.rej
+*.dbmdl
+*.mdf
+*.ldf
