@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\VietHistory.Domain\VietHistory.Domain.csproj" />
+    <ProjectReference Include="..\VietHistory.Application\VietHistory.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="IronPdf" Version="2025.10.8" />
+    <PackageReference Include="itext7" Version="9.3.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.29.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0-preview.7.24405.7" />
+    <PackageReference Include="PdfPig" Version="0.1.9" />
+    <PackageReference Include="PdfSharpCore" Version="1.3.67" />
+  </ItemGroup>
+</Project>

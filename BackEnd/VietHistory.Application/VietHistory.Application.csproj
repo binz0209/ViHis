@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\VietHistory.Domain\VietHistory.Domain.csproj" />
+  </ItemGroup>
+</Project>

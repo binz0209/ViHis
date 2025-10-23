@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\VietHistory.Application\VietHistory.Application.csproj" />
+    <ProjectReference Include="..\VietHistory.Infrastructure\VietHistory.Infrastructure.csproj" />
+    <ProjectReference Include="..\VietHistory.AI\VietHistory.AI.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.7" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+</Project>

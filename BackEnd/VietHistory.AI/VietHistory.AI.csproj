@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\VietHistory.Domain\VietHistory.Domain.csproj" />
+    <ProjectReference Include="..\VietHistory.Application\VietHistory.Application.csproj" />
+    <ProjectReference Include="..\VietHistory.Infrastructure\VietHistory.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MongoDB.Driver" Version="2.29.0" />
+    <PackageReference Include="System.Net.Http.Json" Version="8.0.0" />
+  </ItemGroup>
+</Project>
