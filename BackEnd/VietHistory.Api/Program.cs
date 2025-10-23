@@ -29,8 +29,6 @@ var mongoSettings = new MongoSettings();
 builder.Configuration.GetSection("Mongo").Bind(mongoSettings);
 builder.Services.AddSingleton(mongoSettings);
 builder.Services.AddSingleton<MongoContext>();
-
-// Repos chuyên biệt cho ingest (sources/chunks)
 builder.Services.AddSingleton<ISourceRepository, SourceRepository>();
 builder.Services.AddSingleton<IChunkRepository, ChunkRepository>();
 
@@ -42,28 +40,33 @@ var geminiOptions = new GeminiOptions
     Model = builder.Configuration["Gemini:Model"] ?? "gemini-2.5-flash",
     Temperature = double.TryParse(builder.Configuration["Gemini:Temperature"], out var t) ? t : 0.2,
 
-    // Tùy chọn: Google Programmable Search (nếu muốn web search xịn hơn)
     GoogleSearchApiKey = Environment.GetEnvironmentVariable("GOOGLE_CSE_KEY")
              ?? builder.Configuration["Gemini:GoogleSearchApiKey"],
     GoogleSearchCx = Environment.GetEnvironmentVariable("GOOGLE_CSE_CX")
              ?? builder.Configuration["Gemini:GoogleSearchCx"]
 };
 builder.Services.AddSingleton(geminiOptions);
-
-// HttpClient dùng cho cả Gemini lẫn web search
-builder.Services.AddHttpClient<GeminiStudyService>(c =>
-{
-    c.Timeout = TimeSpan.FromSeconds(60);
-});
+builder.Services.AddHttpClient<GeminiStudyService>(c => c.Timeout = TimeSpan.FromSeconds(60));
 builder.Services.AddScoped<IAIStudyService, GeminiStudyService>();
 
 // ================= Ingest Services (PDF → chunks) =================
-builder.Services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>(); // PdfPig extractor
+builder.Services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();
 builder.Services.AddSingleton<IFallbackAIngestor, FallbackAIngestor>();
 
 // ================= App services (domain) =================
 builder.Services.AddScoped<IPeopleService, PeopleService>();
 builder.Services.AddScoped<IEventsService, EventsService>();
+
+// ================= CORS (Allow All Domains) =================
+// ⚠️ Không nên bật AllowCredentials khi dùng AllowAnyOrigin (theo chuẩn CORS)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy => policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
 
 // ================= Controllers + Swagger =================
 builder.Services.AddControllers();
@@ -75,8 +78,12 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// ================= Middleware =================
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// CORS cho tất cả domain
+app.UseCors("AllowAll");
 
 app.MapControllers();
 
