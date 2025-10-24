@@ -45,7 +45,7 @@ public class GeminiStudyServiceIntegrationTests : IDisposable
         // Real Gemini API configuration
         _options = new GeminiOptions
         {
-            ApiKey = "AIzaSyDJRl6fTbSWjUX17gWOUDFLvPiC6Dwsdfs", // New API key
+            ApiKey = "AIzaSyDJRl6fTbSWjUX17gWOUDFLvPiC6Dwsdfs", // Working API key
             Model = "gemini-2.5-flash", // Correct model
             Temperature = 0.2,
             GoogleSearchApiKey = "AIzaSyDJRl6fTbSWjUX17gWOUDFLvPiC6Dwsdfs", // Reuse Gemini key
