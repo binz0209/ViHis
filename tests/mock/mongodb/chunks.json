@@ -1,0 +1,93 @@
+[
+  {
+    "Id": "chunk-001",
+    "SourceId": "source-dvsktth",
+    "Content": "Năm 938, Ngô Quyền đánh tan quân Nam Hán tại sông Bạch Đằng, chấm dứt 1000 năm Bắc thuộc.",
+    "PageFrom": 15,
+    "PageTo": 15,
+    "ChunkIndex": 0,
+    "ApproxTokens": 25
+  },
+  {
+    "Id": "chunk-002",
+    "SourceId": "source-dvsktth",
+    "Content": "Ngô Quyền sử dụng chiến thuật cọc nhọn cắm dưới sông Bạch Đằng để phục kích quân Nam Hán khi thủy triều rút.",
+    "PageFrom": 16,
+    "PageTo": 18,
+    "ChunkIndex": 1,
+    "ApproxTokens": 28
+  },
+  {
+    "Id": "chunk-003",
+    "SourceId": "source-ls-vn",
+    "Content": "Chiến thắng Bạch Đằng 938 đánh dấu sự độc lập của Việt Nam sau 1000 năm Bắc thuộc, mở ra thời kỳ tự chủ.",
+    "PageFrom": 45,
+    "PageTo": 47,
+    "ChunkIndex": 0,
+    "ApproxTokens": 30
+  },
+  {
+    "Id": "chunk-004",
+    "SourceId": "source-tran-hung-dao",
+    "Content": "Trần Hưng Đạo (1228-1300) là một trong những danh tướng vĩ đại nhất lịch sử Việt Nam, ba lần đánh bại quân Mông Cổ.",
+    "PageFrom": 1,
+    "PageTo": 3,
+    "ChunkIndex": 0,
+    "ApproxTokens": 32
+  },
+  {
+    "Id": "chunk-005",
+    "SourceId": "source-tran-hung-dao",
+    "Content": "Trận Bạch Đằng năm 1288 do Trần Hưng Đạo chỉ huy, tiêu diệt hoàn toàn hạm đội Nguyên-Mông, kết thúc cuộc chiến tranh lần thứ ba.",
+    "PageFrom": 45,
+    "PageTo": 50,
+    "ChunkIndex": 5,
+    "ApproxTokens": 35
+  },
+  {
+    "Id": "chunk-006",
+    "SourceId": "source-ly-thuong-kiet",
+    "Content": "Lý Thường Kiệt (1019-1105) là danh tướng thời Lý, nổi tiếng với chiến dịch tiền phong đánh Tống năm 1075-1077.",
+    "PageFrom": 10,
+    "PageTo": 15,
+    "ChunkIndex": 0,
+    "ApproxTokens": 30
+  },
+  {
+    "Id": "chunk-007",
+    "SourceId": "source-ly-thuong-kiet",
+    "Content": "Lý Thường Kiệt sáng tác bài thơ 'Nam quốc sơn hà' thể hiện tinh thần yêu nước và quyết tâm bảo vệ độc lập dân tộc.",
+    "PageFrom": 22,
+    "PageTo": 25,
+    "ChunkIndex": 2,
+    "ApproxTokens": 32
+  },
+  {
+    "Id": "chunk-008",
+    "SourceId": "source-hai-ba-trung",
+    "Content": "Hai Bà Trưng (Trưng Trắc và Trưng Nhị) khởi nghĩa năm 40 sau Công nguyên, lập nên nước Việt độc lập trong 3 năm (40-43).",
+    "PageFrom": 5,
+    "PageTo": 10,
+    "ChunkIndex": 0,
+    "ApproxTokens": 35
+  },
+  {
+    "Id": "chunk-009",
+    "SourceId": "source-quang-trung",
+    "Content": "Quang Trung Nguyễn Huệ đánh tan 29 vạn quân Thanh trong 5 ngày Tết Kỷ Dậu 1789, tạo nên chiến thắng Ngọc Hồi - Đống Đa.",
+    "PageFrom": 100,
+    "PageTo": 105,
+    "ChunkIndex": 10,
+    "ApproxTokens": 38
+  },
+  {
+    "Id": "chunk-010",
+    "SourceId": "source-dien-bien-phu",
+    "Content": "Chiến thắng Điện Biên Phủ ngày 7/5/1954 đánh dấu sự sụp đổ của chủ nghĩa thực dân cũ, mở đường cho các dân tộc thuộc địa giành độc lập.",
+    "PageFrom": 200,
+    "PageTo": 210,
+    "ChunkIndex": 15,
+    "ApproxTokens": 40
+  }
+]
+
