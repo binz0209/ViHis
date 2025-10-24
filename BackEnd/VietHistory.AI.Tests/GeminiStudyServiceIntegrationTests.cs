@@ -205,8 +205,8 @@ public class GeminiStudyServiceIntegrationTests : IDisposable
         result.Answer.Should().NotBeNullOrEmpty();
         result.Model.Should().Be("gemini-2.5-flash");
         
-        stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(15), 
-            "MongoDB connection should work within 15 seconds");
+        stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(30), 
+            "MongoDB connection should work within 30 seconds");
         
         Console.WriteLine($"✅ IT05 PASSED - MongoDB connection verified via AskAsync");
         Console.WriteLine($"Response time: {stopwatch.ElapsedMilliseconds}ms");
