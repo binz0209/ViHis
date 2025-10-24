@@ -8,7 +8,7 @@ namespace VietHistory.Infrastructure.Mongo
     /// <summary>
     /// Lớp MongoContext — giữ kết nối và các collection MongoDB
     /// </summary>
-    public sealed class MongoContext
+    public sealed class MongoContext : IMongoContext
     {
         public IMongoDatabase Db { get; }
 
