@@ -33,10 +33,10 @@ public class GeminiStudyService : IAIStudyService
 
     private readonly HttpClient _http;
     private readonly GeminiOptions _opt;
-    private readonly MongoContext _ctx;
+    private readonly IMongoContext _ctx;
     private static bool _indexesEnsured = false;
 
-    public GeminiStudyService(HttpClient http, GeminiOptions opt, MongoContext ctx)
+    public GeminiStudyService(HttpClient http, GeminiOptions opt, IMongoContext ctx)
     {
         _http = http;
         _opt = opt;
