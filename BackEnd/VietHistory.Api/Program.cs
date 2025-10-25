@@ -29,6 +29,7 @@ var mongoSettings = new MongoSettings();
 builder.Configuration.GetSection("Mongo").Bind(mongoSettings);
 builder.Services.AddSingleton(mongoSettings);
 builder.Services.AddSingleton<MongoContext>();
+builder.Services.AddSingleton<IMongoContext>(sp => sp.GetRequiredService<MongoContext>());
 builder.Services.AddSingleton<ISourceRepository, SourceRepository>();
 builder.Services.AddSingleton<IChunkRepository, ChunkRepository>();
 
@@ -46,7 +47,7 @@ var geminiOptions = new GeminiOptions
              ?? builder.Configuration["Gemini:GoogleSearchCx"]
 };
 builder.Services.AddSingleton(geminiOptions);
-builder.Services.AddHttpClient<GeminiStudyService>(c => c.Timeout = TimeSpan.FromSeconds(60));
+builder.Services.AddHttpClient<IAIStudyService, GeminiStudyService>(c => c.Timeout = TimeSpan.FromSeconds(60));
 builder.Services.AddScoped<IAIStudyService, GeminiStudyService>();
 
 // ================= Ingest Services (PDF → chunks) =================
