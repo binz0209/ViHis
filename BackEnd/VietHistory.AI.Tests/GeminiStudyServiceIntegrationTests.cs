@@ -214,4 +214,87 @@ public class GeminiStudyServiceIntegrationTests : IDisposable
     }
 
     #endregion
+
+    #region INTEGRATION TESTS - 3 TEST CASES MỚI
+
+    [Fact]
+    public async Task IT06_RealAPI_ComplexHistoricalAnalysis_ReturnsDetailedAnswer()
+    {
+        // GIVEN: Câu hỏi phân tích lịch sử phức tạp
+        var request = new AiAskRequest("Phân tích nguyên nhân và hậu quả của cuộc kháng chiến chống Mỹ của Việt Nam", "vi", 20);
+
+        // WHEN: Ask complex historical analysis question
+        var result = await _service.AskAsync(request);
+
+        // THEN: Trả về phân tích chi tiết
+        result.Should().NotBeNull();
+        result.Answer.Should().NotBeNullOrEmpty();
+        result.Answer.Should().ContainAny("kháng chiến", "Mỹ", "nguyên nhân", "hậu quả");
+        result.Model.Should().Be("gemini-2.5-flash");
+        result.Sources.Should().NotBeEmpty();
+        
+        Console.WriteLine($"✅ IT06 PASSED - Complex historical analysis successful");
+        Console.WriteLine($"Answer length: {result.Answer.Length} characters");
+    }
+
+    [Fact]
+    public async Task IT07_RealAPI_MultiLanguageSupport_HandlesCorrectly()
+    {
+        // GIVEN: Câu hỏi bằng nhiều ngôn ngữ
+        var requests = new[]
+        {
+            new AiAskRequest("Lịch sử Việt Nam", "vi", 5),
+            new AiAskRequest("Vietnamese history", "en", 5),
+            new AiAskRequest("Histoire du Vietnam", "fr", 5)
+        };
+
+        // WHEN: Ask questions in multiple languages
+        var results = await Task.WhenAll(requests.Select(r => _service.AskAsync(r)));
+
+        // THEN: Tất cả đều trả về câu trả lời hợp lệ
+        results.Should().HaveCount(3);
+        results.Should().OnlyContain(r => r != null);
+        results.Should().OnlyContain(r => !string.IsNullOrEmpty(r.Answer));
+        results.Should().OnlyContain(r => r.Model == "gemini-2.5-flash");
+        
+        Console.WriteLine($"✅ IT07 PASSED - Multi-language support verified");
+        Console.WriteLine($"Languages tested: Vietnamese, English, French");
+    }
+
+    [Fact]
+    public async Task IT08_RealAPI_PerformanceUnderLoad_HandlesConcurrentRequests()
+    {
+        // GIVEN: Nhiều requests đồng thời
+        var requests = new[]
+        {
+            new AiAskRequest("Lịch sử Việt Nam", "vi", 5),
+            new AiAskRequest("Văn hóa Việt Nam", "vi", 5),
+            new AiAskRequest("Con người Việt Nam", "vi", 5),
+            new AiAskRequest("Địa lý Việt Nam", "vi", 5),
+            new AiAskRequest("Kinh tế Việt Nam", "vi", 5)
+        };
+
+        var stopwatch = Stopwatch.StartNew();
+
+        // WHEN: Execute concurrent requests
+        var tasks = requests.Select(r => _service.AskAsync(r)).ToArray();
+        var results = await Task.WhenAll(tasks);
+        
+        stopwatch.Stop();
+
+        // THEN: Tất cả đều thành công trong thời gian hợp lý
+        results.Should().HaveCount(5);
+        results.Should().OnlyContain(r => r != null);
+        results.Should().OnlyContain(r => !string.IsNullOrEmpty(r.Answer));
+        results.Should().OnlyContain(r => r.Model == "gemini-2.5-flash");
+        
+        // Performance check: Tất cả requests hoàn thành trong 60 giây
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(60000);
+        
+        Console.WriteLine($"✅ IT08 PASSED - Performance under load verified");
+        Console.WriteLine($"Total time: {stopwatch.ElapsedMilliseconds}ms");
+        Console.WriteLine($"Average time per request: {stopwatch.ElapsedMilliseconds / 5}ms");
+    }
+
+    #endregion
 }
