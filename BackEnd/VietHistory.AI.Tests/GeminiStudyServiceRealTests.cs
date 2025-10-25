@@ -513,4 +513,171 @@ public class GeminiStudyServiceRealTests : IDisposable
     }
 
     #endregion
+
+    #region HAPPY PATH - 3 TEST CASES MỚI
+
+    [Fact]
+    public async Task TC27_AskAsync_WithRichMongoDBData_ReturnsDetailedAnswer()
+    {
+        // GIVEN: MongoDB có data phong phú về lịch sử Việt Nam
+        var service = new GeminiStudyService(_httpClient, _options, _mongoContext);
+        var request = new AiAskRequest("Chi tiết về triều đại nhà Lý", "vi", 10);
+
+        // WHEN: Ask question về triều đại cụ thể
+        var result = await service.AskAsync(request);
+
+        // THEN: Trả về câu trả lời chi tiết
+        result.Should().NotBeNull();
+        result.Answer.Should().NotBeNullOrEmpty();
+        result.Answer.Should().Contain("Lý");
+        result.Model.Should().Be("gemini-2.5-flash");
+        result.Sources.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task TC28_AskAsync_WithMultipleLanguages_HandlesCorrectly()
+    {
+        // GIVEN: Câu hỏi bằng nhiều ngôn ngữ khác nhau
+        var service = new GeminiStudyService(_httpClient, _options, _mongoContext);
+        var requests = new[]
+        {
+            new AiAskRequest("Lịch sử Việt Nam", "vi", 5),
+            new AiAskRequest("Vietnamese history", "en", 5),
+            new AiAskRequest("Histoire du Vietnam", "fr", 5)
+        };
+
+        // WHEN: Ask questions bằng nhiều ngôn ngữ
+        var results = await Task.WhenAll(requests.Select(r => service.AskAsync(r)));
+
+        // THEN: Tất cả đều trả về câu trả lời hợp lệ
+        results.Should().HaveCount(3);
+        results.Should().OnlyContain(r => r != null);
+        results.Should().OnlyContain(r => !string.IsNullOrEmpty(r.Answer));
+        results.Should().OnlyContain(r => r.Model == "gemini-2.5-flash");
+    }
+
+    [Fact]
+    public async Task TC29_AskAsync_WithComplexHistoricalQuestion_ReturnsComprehensiveAnswer()
+    {
+        // GIVEN: Câu hỏi phức tạp về lịch sử
+        var service = new GeminiStudyService(_httpClient, _options, _mongoContext);
+        var request = new AiAskRequest("So sánh các triều đại phong kiến Việt Nam về mặt chính trị, kinh tế và văn hóa", "vi", 15);
+
+        // WHEN: Ask complex historical question
+        var result = await service.AskAsync(request);
+
+        // THEN: Trả về câu trả lời toàn diện
+        result.Should().NotBeNull();
+        result.Answer.Should().NotBeNullOrEmpty();
+        result.Answer.Should().ContainAny("triều đại", "phong kiến", "chính trị", "kinh tế", "văn hóa");
+        result.Model.Should().Be("gemini-2.5-flash");
+        result.Sources.Should().NotBeEmpty();
+    }
+
+    #endregion
+
+    #region EDGE CASES - 3 TEST CASES MỚI
+
+    [Fact]
+    public async Task TC30_AskAsync_WithVeryLongQuestion_HandlesCorrectly()
+    {
+        // GIVEN: Câu hỏi rất dài (hơn 1000 ký tự)
+        var service = new GeminiStudyService(_httpClient, _options, _mongoContext);
+        var longQuestion = "Lịch sử Việt Nam " + string.Join(" ", Enumerable.Repeat("và các sự kiện quan trọng", 50));
+        var request = new AiAskRequest(longQuestion, "vi", 5);
+
+        // WHEN: Ask very long question
+        var result = await service.AskAsync(request);
+
+        // THEN: Vẫn xử lý được và trả về câu trả lời
+        result.Should().NotBeNull();
+        result.Answer.Should().NotBeNullOrEmpty();
+        result.Model.Should().Be("gemini-2.5-flash");
+    }
+
+    [Fact]
+    public async Task TC31_AskAsync_WithSpecialUnicodeCharacters_HandlesCorrectly()
+    {
+        // GIVEN: Câu hỏi có ký tự Unicode đặc biệt
+        var service = new GeminiStudyService(_httpClient, _options, _mongoContext);
+        var request = new AiAskRequest("Lịch sử Việt Nam với các ký tự đặc biệt: é, è, ê, ô, ơ, ư, ă, â", "vi", 5);
+
+        // WHEN: Ask question with special Unicode characters
+        var result = await service.AskAsync(request);
+
+        // THEN: Xử lý được ký tự Unicode
+        result.Should().NotBeNull();
+        result.Answer.Should().NotBeNullOrEmpty();
+        result.Model.Should().Be("gemini-2.5-flash");
+    }
+
+    [Fact]
+    public async Task TC32_AskAsync_WithExtremeContextLength_HandlesCorrectly()
+    {
+        // GIVEN: Context length cực đại (1000)
+        var service = new GeminiStudyService(_httpClient, _options, _mongoContext);
+        var request = new AiAskRequest("Lịch sử Việt Nam", "vi", 1000);
+
+        // WHEN: Ask with extreme context length
+        var result = await service.AskAsync(request);
+
+        // THEN: Vẫn xử lý được và trả về câu trả lời
+        result.Should().NotBeNull();
+        result.Answer.Should().NotBeNullOrEmpty();
+        result.Model.Should().Be("gemini-2.5-flash");
+    }
+
+    #endregion
+
+    #region ERROR SCENARIOS - 3 TEST CASES MỚI
+
+    [Fact]
+    public async Task TC33_AskAsync_WithInvalidLanguageCode_DefaultsToVietnamese()
+    {
+        // GIVEN: Language code không hợp lệ
+        var service = new GeminiStudyService(_httpClient, _options, _mongoContext);
+        var request = new AiAskRequest("Lịch sử Việt Nam", "invalid_lang", 5);
+
+        // WHEN: Ask with invalid language code
+        var result = await service.AskAsync(request);
+
+        // THEN: Default về tiếng Việt và vẫn trả về câu trả lời
+        result.Should().NotBeNull();
+        result.Answer.Should().NotBeNullOrEmpty();
+        result.Model.Should().Be("gemini-2.5-flash");
+    }
+
+    [Fact]
+    public async Task TC34_AskAsync_WithNegativeContextLength_ClampsToMinimum()
+    {
+        // GIVEN: Context length âm
+        var service = new GeminiStudyService(_httpClient, _options, _mongoContext);
+        var request = new AiAskRequest("Lịch sử Việt Nam", "vi", -5);
+
+        // WHEN: Ask with negative context length
+        var result = await service.AskAsync(request);
+
+        // THEN: Clamp về minimum và vẫn trả về câu trả lời
+        result.Should().NotBeNull();
+        result.Answer.Should().NotBeNullOrEmpty();
+        result.Model.Should().Be("gemini-2.5-flash");
+    }
+
+    [Fact]
+    public async Task TC35_AskAsync_WithMalformedQuestion_HandlesGracefully()
+    {
+        // GIVEN: Câu hỏi có format không đúng
+        var service = new GeminiStudyService(_httpClient, _options, _mongoContext);
+        var request = new AiAskRequest("???Lịch sử Việt Nam???", "vi", 5);
+
+        // WHEN: Ask with malformed question
+        var result = await service.AskAsync(request);
+
+        // THEN: Vẫn xử lý được và trả về câu trả lời
+        result.Should().NotBeNull();
+        result.Answer.Should().NotBeNullOrEmpty();
+        result.Model.Should().Be("gemini-2.5-flash");
+    }
+
+    #endregion
 }

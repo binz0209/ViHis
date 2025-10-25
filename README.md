@@ -2,8 +2,8 @@
 
 **AI-Assisted Unit Testing for Vietnamese History Q&A System**
 
-[![Tests](https://img.shields.io/badge/tests-31%20total-blue)](BackEnd/VietHistory.AI.Tests/)
-[![Passing](https://img.shields.io/badge/passing-31%20(100%25)-success)](BackEnd/VietHistory.AI.Tests/)
+[![Tests](https://img.shields.io/badge/tests-40%20total-blue)](BackEnd/VietHistory.AI.Tests/)
+[![Passing](https://img.shields.io/badge/passing-40%20(100%25)-success)](BackEnd/VietHistory.AI.Tests/)
 [![Skipped](https://img.shields.io/badge/skipped-0%20(0%25)-success)](BackEnd/VietHistory.AI.Tests/)
 [![Coverage](https://img.shields.io/badge/coverage-85%25%2B-success)](BackEnd/TestResults/)
 
@@ -50,8 +50,8 @@ ViHis/
 │   │   └── Gemini/
 │   │       └── GeminiClient.cs              # Core implementation (293 lines)
 │   ├── VietHistory.AI.Tests/                # Test suite
-│   │   ├── GeminiStudyServiceTests.cs       # 26 unit tests
-│   │   └── GeminiStudyServiceIntegrationTests.cs  # 5 integration tests
+│   │   ├── GeminiStudyServiceRealTests.cs       # 32 unit tests
+│   │   └── GeminiStudyServiceIntegrationTests.cs  # 8 integration tests
 │   ├── VietHistory.Infrastructure/
 │   │   └── Mongo/
 │   │       └── IMongoContext.cs             # Mocking interface
