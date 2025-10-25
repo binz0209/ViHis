@@ -29,7 +29,7 @@ public class GeminiStudyServiceRealTests : IDisposable
         // Setup REAL Gemini API
         _options = new GeminiOptions
         {
-            ApiKey = "AIzaSyCpicTHDEmrz8XhsuQc9Vqn8rsDdf2d6x0", // Real API key
+            ApiKey = "AIzaSyCM-_PSFaql1rkp1gsWjGO2a-LbTD6h8ng", // Real API key
             Model = "gemini-2.5-flash",
             Temperature = 0.2
         };
