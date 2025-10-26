@@ -92,6 +92,8 @@ namespace VietHistory.Infrastructure.Mongo
         IMongoCollection<ChunkDoc> Collection { get; }
         Task InsertManyAsync(IEnumerable<ChunkDoc> docs, CancellationToken ct = default);
         Task CreateIndexesAsync(CancellationToken ct = default);
+        Task InsertAsync(ChunkDoc doc, CancellationToken ct = default);
+
     }
 
     public sealed class SourceRepository : ISourceRepository
@@ -137,5 +139,10 @@ namespace VietHistory.Infrastructure.Mongo
             var textIndex = Builders<ChunkDoc>.IndexKeys.Text(x => x.Content);
             await Collection.Indexes.CreateOneAsync(new CreateIndexModel<ChunkDoc>(textIndex), cancellationToken: ct);
         }
+        public async Task InsertAsync(ChunkDoc doc, CancellationToken ct = default)
+        {
+            await Collection.InsertOneAsync(doc, cancellationToken: ct);
+        }
+
     }
 }

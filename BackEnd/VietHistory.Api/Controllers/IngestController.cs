@@ -26,18 +26,21 @@ public sealed class IngestController : ControllerBase
         _chunkRepo = chunkRepo;
     }
 
-    /// <summary>Upload PDF có chữ -> preview 10 chunk đầu</summary>
+    /// <summary>📄 Upload PDF để preview 10 chunk đầu tiên (chưa lưu DB)</summary>
     [HttpPost("preview")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(IngestPreviewResult), StatusCodes.Status200OK)]
     public async Task<ActionResult<IngestPreviewResult>> Preview([FromForm] IngestUploadForm form)
     {
-        if (form.File is null || form.File.Length == 0) return BadRequest("Missing PDF.");
+        if (form.File is null || form.File.Length == 0)
+            return BadRequest("Missing PDF.");
+
         using var ms = new MemoryStream();
         await form.File.CopyToAsync(ms);
         ms.Position = 0;
 
-        var (chunks, totalPages) = _ingestor.Run(ms);
+        // ⚙️ Gọi RunAsync (chưa cần sourceId vì chỉ preview)
+        var (chunks, totalPages) = await _ingestor.RunAsync(ms, "preview");
 
         return Ok(new IngestPreviewResult
         {
@@ -48,19 +51,19 @@ public sealed class IngestController : ControllerBase
         });
     }
 
-    /// <summary>Ingest thật & lưu Mongo (sources, chunks)</summary>
+    /// <summary>📘 Ingest thật & lưu Mongo (sources, chunks có embedding)</summary>
     [HttpPost("pdf")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> IngestAndSave([FromForm] IngestUploadForm form, CancellationToken ct)
     {
-        if (form.File is null || form.File.Length == 0) return BadRequest("Missing PDF.");
+        if (form.File is null || form.File.Length == 0)
+            return BadRequest("Missing PDF.");
+
         using var ms = new MemoryStream();
         await form.File.CopyToAsync(ms);
         ms.Position = 0;
 
-        var (chunks, totalPages) = _ingestor.Run(ms);
-
-        // 1) Insert Source
+        // 1️⃣ Tạo Source
         var source = new SourceDoc
         {
             Id = ObjectId.GenerateNewId().ToString(),
@@ -70,35 +73,27 @@ public sealed class IngestController : ControllerBase
             Author = form.Author,
             Year = form.Year,
             FileName = form.File.FileName,
-            Pages = totalPages
         };
         var sourceId = await _sourceRepo.InsertAsync(source, ct);
 
-        // 2) Insert Chunks
-        var docs = chunks.Select(c => new ChunkDoc
-        {
-            Id = ObjectId.GenerateNewId().ToString(),
-            SourceId = sourceId,
-            ChunkIndex = c.ChunkIndex,
-            Content = c.Content,
-            PageFrom = c.PageFrom,
-            PageTo = c.PageTo,
-            ApproxTokens = c.ApproxTokens
-        });
+        // 2️⃣ Gọi Ingest (sẽ tự tạo chunk + embedding + lưu Mongo)
+        var (chunks, totalPages) = await _ingestor.RunAsync(ms, sourceId);
 
-        await _chunkRepo.InsertManyAsync(docs, ct);
-        await _chunkRepo.CreateIndexesAsync(ct);
+        // 3️⃣ Update số trang vào Source (nếu muốn)
+        var update = Builders<SourceDoc>.Update.Set(s => s.Pages, totalPages);
+        await _sourceRepo.Collection.UpdateOneAsync(s => s.Id == sourceId, update, cancellationToken: ct);
 
         return Ok(new
         {
-            message = "Ingested & saved",
+            message = "✅ Ingested & saved successfully",
             sourceId,
             title = source.Title,
             totalPages,
             totalChunks = chunks.Count
         });
     }
-    /// <summary>📖 Lấy toàn bộ các chunk đã ingest (hoặc theo sourceId nếu có)</summary>
+
+    /// <summary>📖 Lấy toàn bộ các chunk đã ingest (hoặc theo sourceId)</summary>
     [HttpGet("chunks")]
     [ProducesResponseType(typeof(List<ChunkDoc>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllChunks([FromQuery] string? sourceId = null, [FromQuery] int skip = 0, [FromQuery] int take = 100)
@@ -115,14 +110,10 @@ public sealed class IngestController : ControllerBase
             .ThenBy(c => c.ChunkIndex)
             .ToListAsync();
 
-        return Ok(new
-        {
-            count = chunks.Count,
-            chunks
-        });
+        return Ok(new { count = chunks.Count, chunks });
     }
 
-    /// <summary>📘 Lấy danh sách source đã ingest (để chọn lọc xem chunk)</summary>
+    /// <summary>📗 Lấy danh sách source đã ingest (để chọn lọc xem chunk)</summary>
     [HttpGet("sources")]
     [ProducesResponseType(typeof(List<SourceDoc>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllSources([FromQuery] int skip = 0, [FromQuery] int take = 50)
@@ -135,11 +126,7 @@ public sealed class IngestController : ControllerBase
             .ThenBy(s => s.Title)
             .ToListAsync();
 
-        return Ok(new
-        {
-            count = sources.Count,
-            sources
-        });
+        return Ok(new { count = sources.Count, sources });
     }
 
     /// <summary>🔍 Lấy chi tiết 1 source + các chunk của nó</summary>
@@ -149,7 +136,8 @@ public sealed class IngestController : ControllerBase
     public async Task<IActionResult> GetSourceWithChunks(string id)
     {
         var src = await _sourceRepo.Collection.Find(s => s.Id == id).FirstOrDefaultAsync();
-        if (src == null) return NotFound($"Không tìm thấy source với id={id}");
+        if (src == null)
+            return NotFound($"Không tìm thấy source với id={id}");
 
         var chunks = await _chunkRepo.Collection
             .Find(c => c.SourceId == id)
@@ -163,5 +151,4 @@ public sealed class IngestController : ControllerBase
             chunks
         });
     }
-
 }

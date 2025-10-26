@@ -8,4 +8,7 @@
     <PackageReference Include="MongoDB.Driver" Version="2.29.0" />
     <PackageReference Include="System.Net.Http.Json" Version="8.0.0" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Gemini\" />
+  </ItemGroup>
 </Project>

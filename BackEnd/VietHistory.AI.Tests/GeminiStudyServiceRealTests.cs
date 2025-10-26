@@ -4,7 +4,7 @@ using Moq;
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using VietHistory.AI.Gemini;
+using  VietHistory.Infrastructure.Services.Gemini;
 using VietHistory.Application.DTOs;
 using VietHistory.Application.DTOs.Ingest;
 using VietHistory.Infrastructure.Mongo;

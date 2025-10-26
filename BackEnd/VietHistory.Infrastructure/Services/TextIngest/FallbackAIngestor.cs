@@ -1,34 +1,41 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using VietHistory.Application.DTOs.Ingest;
+using VietHistory.Infrastructure.Mongo;
+using VietHistory.Infrastructure.Services.Gemini;
 
 namespace VietHistory.Infrastructure.Services.TextIngest
 {
     public interface IFallbackAIngestor
     {
-        (IReadOnlyList<Chunk> Chunks, int TotalPages) Run(Stream pdfStream, ParserProfile? profile = null);
+        Task<(IReadOnlyList<Chunk> Chunks, int TotalPages)> RunAsync(Stream pdfStream, string sourceId, ParserProfile? profile = null);
     }
 
     public sealed class FallbackAIngestor : IFallbackAIngestor
     {
         private readonly IPdfTextExtractor _extractor;
+        private readonly IChunkRepository _chunkRepository;
+        private readonly GeminiOptions _geminiOptions;
 
-        public FallbackAIngestor(IPdfTextExtractor extractor)
+        public FallbackAIngestor(IPdfTextExtractor extractor, IChunkRepository chunkRepo, GeminiOptions gemini)
         {
             _extractor = extractor;
+            _chunkRepository = chunkRepo;
+            _geminiOptions = gemini;
         }
 
-        public (IReadOnlyList<Chunk> Chunks, int TotalPages) Run(Stream pdfStream, ParserProfile? profile = null)
+        public async Task<(IReadOnlyList<Chunk> Chunks, int TotalPages)> RunAsync(Stream pdfStream, string sourceId, ParserProfile? profile = null)
         {
             var pf = profile ?? new ParserProfile();
 
-            // 1) Extract
+            // 1️⃣ Extract pages
             var pages = _extractor.ExtractPages(pdfStream)
                 .Select(p => new PageText { PageNumber = p.PageNumber, Raw = TextNormalizer.CleanRaw(p.Raw) })
                 .OrderBy(p => p.PageNumber)
                 .ToList();
 
-            // 2) Header/Footer
-            // 1️⃣ Gộp các trang cực ngắn (ví dụ chỉ có 1–2 dòng)
+            // 2️⃣ Merge short pages
             for (int i = 0; i < pages.Count - 1;)
             {
                 if (pages[i].Raw.Length < 400)
@@ -43,10 +50,8 @@ namespace VietHistory.Infrastructure.Services.TextIngest
                 else i++;
             }
 
-            // 2️⃣ Header/footer detect chặt hơn (80%)
+            // 3️⃣ Detect & clean headers/footers
             var (headers, footers) = HeaderFooterDetector.Detect(pages, 2, 2, 0.8);
-
-            // 3️⃣ Loại bỏ header/footer & làm sạch [Trang X] dư
             var cleaned = HeaderFooterDetector.RemoveHeadersFooters(pages, headers, footers)
                 .Select(p => new PageText
                 {
@@ -55,7 +60,7 @@ namespace VietHistory.Infrastructure.Services.TextIngest
                 })
                 .ToList();
 
-            // 3) Sentences + giữ [Trang X]
+            // 4️⃣ Split to sentences (keep [Trang X])
             var sentencesWithPage = new List<(string sentence, int page)>();
             foreach (var p in cleaned)
             {
@@ -68,7 +73,7 @@ namespace VietHistory.Infrastructure.Services.TextIngest
                 foreach (var s in sents) sentencesWithPage.Add((s, p.PageNumber));
             }
 
-            // 4) Pack theo token + overlap
+            // 5️⃣ Pack chunks
             var chunks = new List<Chunk>();
             var buffer = new List<(string sentence, int page)>();
             int bufTok = 0;
@@ -95,6 +100,32 @@ namespace VietHistory.Infrastructure.Services.TextIngest
             }
             if (buffer.Count > 0) chunks.Add(BuildChunk(idx++, buffer));
 
+            // 6️⃣ Tạo embedding + lưu Mongo song song
+            await Parallel.ForEachAsync(chunks, async (chunk, token) =>
+            {
+                try
+                {
+                    var embedding = await GetEmbeddingAsync(chunk.Content, _geminiOptions.ApiKey);
+                    var chunkDoc = new ChunkDoc
+                    {
+                        SourceId = sourceId,
+                        ChunkIndex = chunk.ChunkIndex,
+                        Content = chunk.Content,
+                        PageFrom = chunk.PageFrom,
+                        PageTo = chunk.PageTo,
+                        ApproxTokens = chunk.ApproxTokens,
+                        CreatedAt = DateTime.UtcNow,
+                        Embedding = embedding
+                    };
+
+                    await _chunkRepository.InsertAsync(chunkDoc);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Lỗi embedding chunk {chunk.ChunkIndex}: {ex.Message}");
+                }
+            });
+
             return (chunks, pages.Count);
         }
 
@@ -116,6 +147,27 @@ namespace VietHistory.Infrastructure.Services.TextIngest
                 PageTo = pTo,
                 ApproxTokens = ChunkPack.ApproxTokens(text)
             };
+        }
+
+        private async Task<List<float>> GetEmbeddingAsync(string text, string apiKey)
+        {
+            using var client = new HttpClient();
+            var body = new
+            {
+                model = "embedding-001", // Gemini embedding model
+                content = new { parts = new[] { new { text } } }
+            };
+
+            var json = JsonSerializer.Serialize(body);
+            var resp = await client.PostAsync(
+                $"https://generativelanguage.googleapis.com/v1beta/models/embedding-001:embedContent?key={apiKey}",
+                new StringContent(json, Encoding.UTF8, "application/json")
+            );
+
+            var str = await resp.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(str);
+            var emb = doc.RootElement.GetProperty("embedding").GetProperty("values");
+            return emb.EnumerateArray().Select(x => x.GetSingle()).ToList();
         }
     }
 }

@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.OpenApi.Models;
-using VietHistory.AI.Gemini;
+using MongoDB.Driver;
+using  VietHistory.Infrastructure.Services.Gemini;
 using VietHistory.Application.Services;
 using VietHistory.Infrastructure.Mongo;
 using VietHistory.Infrastructure.Services;
+using VietHistory.Infrastructure.Services.AI;
 using VietHistory.Infrastructure.Services.TextIngest;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,6 +51,7 @@ var geminiOptions = new GeminiOptions
 builder.Services.AddSingleton(geminiOptions);
 builder.Services.AddHttpClient<IAIStudyService, GeminiStudyService>(c => c.Timeout = TimeSpan.FromSeconds(60));
 builder.Services.AddScoped<IAIStudyService, GeminiStudyService>();
+builder.Services.AddScoped<KWideRetriever>();
 
 // ================= Ingest Services (PDF → chunks) =================
 builder.Services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();
@@ -87,5 +90,28 @@ app.UseSwaggerUI();
 app.UseCors("AllowAll");
 
 app.MapControllers();
+
+// ================= Warm-up Mongo =================
+Task.Run(async () =>
+{
+    try
+    {
+        // Lấy context từ DI container
+        using var scope = app.Services.CreateScope();
+        var ctx = scope.ServiceProvider.GetRequiredService<IMongoContext>();
+
+        // Gọi ping để khởi tạo kết nối
+        await ctx.PingAsync();
+
+        // Truy vấn 1 document nhỏ để warm-up metadata
+        await ctx.Chunks.Find(_ => true).Limit(1).FirstOrDefaultAsync();
+
+        Console.WriteLine("✅ MongoDB warm-up completed.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Mongo warm-up failed: {ex.Message}");
+    }
+});
 
 app.Run();

@@ -9,8 +9,9 @@ using VietHistory.Application.DTOs;
 using VietHistory.Application.Services;
 using VietHistory.Infrastructure.Mongo;
 using VietHistory.Application.DTOs.Ingest;
+using VietHistory.Infrastructure.Services.AI;
 
-namespace VietHistory.AI.Gemini;
+namespace VietHistory.Infrastructure.Services.Gemini;
 
 public class GeminiOptions
 {
@@ -19,8 +20,8 @@ public class GeminiOptions
     public double Temperature { get; set; } = 0.2;
 
     // (Tuỳ chọn) Google Programmable Search
-    public string? GoogleSearchApiKey { get; set; } = null; // e.g. "AIza..."
-    public string? GoogleSearchCx { get; set; } = null;     // e.g. "abcd1234:xxxx"
+    public string? GoogleSearchApiKey { get; set; } = null;
+    public string? GoogleSearchCx { get; set; } = null;
 }
 
 public class GeminiStudyService : IAIStudyService
@@ -34,13 +35,15 @@ public class GeminiStudyService : IAIStudyService
     private readonly HttpClient _http;
     private readonly GeminiOptions _opt;
     private readonly IMongoContext _ctx;
+    private readonly KWideRetriever _retriever;
     private static bool _indexesEnsured = false;
 
-    public GeminiStudyService(HttpClient http, GeminiOptions opt, IMongoContext ctx)
+    public GeminiStudyService(HttpClient http, GeminiOptions opt, IMongoContext ctx, KWideRetriever retriever)
     {
         _http = http;
         _opt = opt;
         _ctx = ctx;
+        _retriever = retriever;
         _http.Timeout = TimeSpan.FromSeconds(60);
     }
 
@@ -49,37 +52,42 @@ public class GeminiStudyService : IAIStudyService
     public async Task<AiAnswer> AskAsync(AiAskRequest req, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(_opt.ApiKey))
-            throw new InvalidOperationException("Missing Gemini API key. Set GEMINI_API_KEY or appsettings:Gemini:ApiKey.");
+            throw new InvalidOperationException("❌ Missing Gemini API key. Set GEMINI_API_KEY or appsettings:Gemini:ApiKey.");
 
         if (string.IsNullOrWhiteSpace(_opt.Model))
-            throw new InvalidOperationException("Missing Gemini model. Set appsettings:Gemini:Model.");
+            throw new InvalidOperationException("❌ Missing Gemini model. Set appsettings:Gemini:Model.");
 
         await EnsureChunkTextIndexOnce(ct);
 
-        // 1) RAG từ Mongo
-        var max = Math.Clamp(req.MaxContext <= 0 ? 12 : req.MaxContext, 1, 32);
-        var chunks = await QueryTopChunksAsync(req.Question ?? "", null, max, ct);
+        // ============================================
+        // 🧠 1️⃣ Lấy context bằng K-Wide retrieval
+        // ============================================
+        var max = Math.Clamp(req.MaxContext <= 0 ? 6 : req.MaxContext, 1, 20);
+        var chunks = await _retriever.GetKWideChunksAsync(req.Question ?? "", max, 1, ct);
         var mongoContext = await BuildChunkContextAsync(chunks, ct);
 
-        // 2) Nếu không có context trong tài liệu → tìm trên web
+        // ============================================
+        // 🌐 2️⃣ Nếu không có context → fallback web
+        // ============================================
         List<WebSnippet> webSnippets = new();
         if (string.IsNullOrWhiteSpace(mongoContext))
-        {
             webSnippets = await SearchWebAsync(req.Question ?? "", req.Language, 3, ct);
-        }
 
-        // 3) Prompt tổng hợp
+        // ============================================
+        // 💬 3️⃣ Chuẩn bị prompt gửi đến Gemini
+        // ============================================
         var lang = string.IsNullOrWhiteSpace(req.Language) ? "vi" : req.Language!;
         var systemPrompt =
-            $"Bạn là trợ lý học tập lịch sử Việt Nam. Luôn trả lời bằng ngôn ngữ: {lang}. " +
-            "Hãy sử dụng BỐI CẢNH từ tài liệu đã học (nếu có). " +
-            "Nếu không có, hãy dựa vào BỐI CẢNH WEB được trích dưới đây và kiến thức chung để trả lời ngắn gọn, chính xác. " +
-            "Khi phù hợp, nhắc tên nguồn (tiêu đề + trang hoặc URL) trong ngoặc vuông.";
+            $"Bạn là trợ lý học tập lịch sử Việt Nam trong hệ thống VietHistory. Luôn trả lời bằng ngôn ngữ: {lang}. " +
+            "Sử dụng BỐI CẢNH từ **cơ sở dữ liệu VietHistory** (được xây dựng từ các tài liệu lịch sử đã lưu trữ) nếu có. " +
+            "Nếu không tìm thấy thông tin trong cơ sở dữ liệu, hãy dựa vào BỐI CẢNH WEB bên dưới và kiến thức chung để trả lời ngắn gọn, chính xác. " +
+            "Khi có thể, hãy ghi rõ nguồn tham khảo (ví dụ: tên tài liệu hoặc URL) trong ngoặc vuông. " +
+            "Nếu dữ liệu không tồn tại trong hệ thống, hãy nói rõ rằng: 'Trong cơ sở dữ liệu hiện tại của tôi, chưa có thông tin cụ thể về câu hỏi này.'";
 
         var parts = new List<object> { new { text = systemPrompt } };
 
         if (!string.IsNullOrWhiteSpace(mongoContext))
-            parts.Add(new { text = "Bối cảnh (tài liệu PDF đã ingest):\n" + mongoContext });
+            parts.Add(new { text = "Bối cảnh (trích từ tài liệu PDF):\n" + mongoContext });
         if (webSnippets.Count > 0)
             parts.Add(new { text = "Bối cảnh Web (tóm tắt):\n" + JoinWebSnippets(webSnippets) });
 
@@ -91,6 +99,9 @@ public class GeminiStudyService : IAIStudyService
             generationConfig = new { temperature = _opt.Temperature }
         };
 
+        // ============================================
+        // ⚙️ 4️⃣ Gửi request đến Gemini API
+        // ============================================
         var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_opt.Model}:generateContent?key={_opt.ApiKey}";
         using var httpContent = new StringContent(JsonSerializer.Serialize(body, JsonOpt), Encoding.UTF8, "application/json");
         using var resp = await _http.PostAsync(url, httpContent, ct);
@@ -104,8 +115,7 @@ public class GeminiStudyService : IAIStudyService
         return new AiAnswer(answer, _opt.Model, null);
     }
 
-    // ======================== RAG: Mongo ========================
-
+    // ======================== Mongo Index Setup ========================
     private async Task EnsureChunkTextIndexOnce(CancellationToken ct)
     {
         if (_indexesEnsured) return;
@@ -121,65 +131,46 @@ public class GeminiStudyService : IAIStudyService
         }
         catch
         {
-            // Không sao nếu không có quyền tạo index
+            // Bỏ qua nếu không có quyền tạo index
         }
         finally { _indexesEnsured = true; }
     }
 
-    private async Task<List<ChunkDoc>> QueryTopChunksAsync(string question, string? sourceId, int limit, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(question))
-            return new List<ChunkDoc>();
-
-        // $text search
-        try
-        {
-            var filter = Builders<ChunkDoc>.Filter.Text(question);
-            if (!string.IsNullOrWhiteSpace(sourceId))
-                filter &= Builders<ChunkDoc>.Filter.Eq(x => x.SourceId, sourceId);
-
-            var sort = Builders<ChunkDoc>.Sort.MetaTextScore("score");
-            var cursor = await _ctx.Chunks.FindAsync(filter, new FindOptions<ChunkDoc> { Sort = sort, Limit = limit }, ct);
-            var list = await cursor.ToListAsync(ct);
-            if (list.Count > 0) return list;
-        }
-        catch { /* fallback */ }
-
-        // Regex fallback
-        var regex = new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(question), "i");
-        var fbFilter = Builders<ChunkDoc>.Filter.Regex(x => x.Content, regex);
-        if (!string.IsNullOrWhiteSpace(sourceId))
-            fbFilter &= Builders<ChunkDoc>.Filter.Eq(x => x.SourceId, sourceId);
-        return await _ctx.Chunks.Find(fbFilter).Limit(limit).ToListAsync(ct);
-    }
-
+    // ======================== Tạo context ========================
     private async Task<string> BuildChunkContextAsync(List<ChunkDoc> chunks, CancellationToken ct)
     {
         if (chunks.Count == 0) return string.Empty;
+
+        // Prefetch source titles (song song)
         var srcIds = chunks.Select(c => c.SourceId).Distinct().ToList();
-        var srcDocs = await _ctx.Sources.Find(s => srcIds.Contains(s.Id)).ToListAsync(ct);
+        var srcDocsTask = _ctx.Sources.Find(s => srcIds.Contains(s.Id))
+            .Project(s => new { s.Id, s.Title, s.FileName })
+            .ToListAsync(ct);
+
+        var srcDocs = await srcDocsTask;
         var srcMap = srcDocs.ToDictionary(s => s.Id, s => s.Title ?? s.FileName);
 
-        var lines = new List<string>(chunks.Count);
+        var sb = new StringBuilder();
+        int count = 0;
         foreach (var c in chunks)
         {
-            var title = srcMap.TryGetValue(c.SourceId, out var t) ? t : "Nguồn chưa rõ";
-            var pages = c.PageFrom == c.PageTo ? $"{c.PageFrom}" : $"{c.PageFrom}-{c.PageTo}";
-            var snip = Truncate(OneLine(c.Content), 900);
-            lines.Add($"• [{title} – Trang {pages}] {snip}");
+            if (count++ > 20) break; // giới hạn 20 block thực tế
+            var title = srcMap.GetValueOrDefault(c.SourceId, "Nguồn");
+            var snip = OneLine(c.Content);
+            if (snip.Length > 500) snip = snip[..500] + "…";
+            sb.AppendLine($"[{title} – tr {c.PageFrom}-{c.PageTo}] {snip}");
         }
-        return string.Join("\n", lines);
+        return sb.ToString();
     }
 
-    // ======================== WEB FALLBACK ========================
 
+    // ======================== Web fallback (Wikipedia / Google CSE) ========================
     private record WebSnippet(string Title, string Url, string Snippet);
 
     private async Task<List<WebSnippet>> SearchWebAsync(string query, string? language, int max, CancellationToken ct)
     {
         var results = new List<WebSnippet>();
 
-        // 1) Nếu có Google Programmable Search → dùng trước
         if (!string.IsNullOrWhiteSpace(_opt.GoogleSearchApiKey) && !string.IsNullOrWhiteSpace(_opt.GoogleSearchCx))
         {
             try
@@ -202,22 +193,21 @@ public class GeminiStudyService : IAIStudyService
                     }
                 }
             }
-            catch { /* bỏ qua và fallback */ }
+            catch { }
         }
 
-        // 2) Wikipedia (vi/en) fallback (không cần API key)
+        // Wikipedia fallback nếu không có Google Search
         if (results.Count == 0)
         {
-            var lang = string.IsNullOrWhiteSpace(language) ? "vi" : language!.StartsWith("vi", StringComparison.OrdinalIgnoreCase) ? "vi" : "en";
+            var lang = string.IsNullOrWhiteSpace(language) ? "vi" :
+                       language!.StartsWith("vi", StringComparison.OrdinalIgnoreCase) ? "vi" : "en";
             try
             {
-                // search
-                var searchUrl = $"https://{lang}.wikipedia.org/w/api.php?action=opensearch&search={Uri.EscapeDataString(query)}&limit={Math.Clamp(max, 1, 10)}&namespace=0&format=json";
+                var searchUrl = $"https://{lang}.wikipedia.org/w/api.php?action=opensearch&search={Uri.EscapeDataString(query)}&limit={max}&namespace=0&format=json";
                 using var sresp = await _http.GetAsync(searchUrl, ct);
                 if (sresp.IsSuccessStatusCode)
                 {
                     using var doc = JsonDocument.Parse(await sresp.Content.ReadAsStringAsync(ct));
-                    // format: [search term, titles[], descriptions[], urls[]]
                     if (doc.RootElement.ValueKind == JsonValueKind.Array && doc.RootElement.GetArrayLength() >= 4)
                     {
                         var titles = doc.RootElement[1];
@@ -229,7 +219,6 @@ public class GeminiStudyService : IAIStudyService
                             var link = links[i].GetString() ?? "";
                             var snip = descs[i].GetString() ?? "";
 
-                            // summary (REST)
                             string summary = snip;
                             if (!string.IsNullOrWhiteSpace(title))
                             {
@@ -244,16 +233,15 @@ public class GeminiStudyService : IAIStudyService
                                             summary = ex.GetString() ?? summary;
                                     }
                                 }
-                                catch { /* ignore */ }
+                                catch { }
                             }
-
                             if (!string.IsNullOrWhiteSpace(link))
                                 results.Add(new WebSnippet(title, link, summary));
                         }
                     }
                 }
             }
-            catch { /* ignore */ }
+            catch { }
         }
 
         return results.Take(max).ToList();
@@ -265,8 +253,7 @@ public class GeminiStudyService : IAIStudyService
         return string.Join("\n", lines);
     }
 
-    // ======================== Helpers ========================
-
+    // ======================== Helper ========================
     private static string OneLine(string s) => (s ?? string.Empty).Replace("\r\n", " ").Replace('\n', ' ').Trim();
     private static string Truncate(string s, int max) => s.Length <= max ? s : s.Substring(0, max) + "…";
 

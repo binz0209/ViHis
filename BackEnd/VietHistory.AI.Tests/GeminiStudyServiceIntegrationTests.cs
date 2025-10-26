@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
-using VietHistory.AI.Gemini;
+using  VietHistory.Infrastructure.Services.Gemini;
 using VietHistory.Application.DTOs;
 using VietHistory.Infrastructure.Mongo;
 using Xunit;

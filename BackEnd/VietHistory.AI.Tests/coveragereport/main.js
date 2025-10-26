@@ -213,8 +213,8 @@ var assemblies = [
   {
     "name": "VietHistory.AI",
     "classes": [
-      { "name": "VietHistory.AI.Gemini.GeminiOptions", "rp": "VietHistory.AI_GeminiOptions.html", "cl": 5, "ucl": 0, "cal": 5, "tl": 292, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "VietHistory.AI.Gemini.GeminiStudyService", "rp": "VietHistory.AI_GeminiStudyService.html", "cl": 140, "ucl": 57, "cal": 197, "tl": 292, "cb": 76, "tb": 132, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": " VietHistory.Infrastructure.Services.Gemini.GeminiOptions", "rp": "VietHistory.AI_GeminiOptions.html", "cl": 5, "ucl": 0, "cal": 5, "tl": 292, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": " VietHistory.Infrastructure.Services.Gemini.GeminiStudyService", "rp": "VietHistory.AI_GeminiStudyService.html", "cl": 140, "ucl": 57, "cal": 197, "tl": 292, "cb": 76, "tb": 132, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
     ]},
   {
     "name": "VietHistory.Application",
@@ -279,7 +279,7 @@ var riskHotspotMetrics = [
 
 var riskHotspots = [
   {
-    "assembly": "VietHistory.AI", "class": "VietHistory.AI.Gemini.GeminiStudyService", "reportPath": "VietHistory.AI_GeminiStudyService.html", "methodName": "SearchWebAsync()", "methodShortName": "SearchWebAsync()", "fileIndex": 0, "line": 179,
+    "assembly": "VietHistory.AI", "class": " VietHistory.Infrastructure.Services.Gemini.GeminiStudyService", "reportPath": "VietHistory.AI_GeminiStudyService.html", "methodName": "SearchWebAsync()", "methodShortName": "SearchWebAsync()", "fileIndex": 0, "line": 179,
     "metrics": [
       { "value": 1126, "exceeded": true },
       { "value": 64, "exceeded": true },
@@ -333,13 +333,13 @@ var riskHotspots = [
       { "value": 6, "exceeded": false },
     ]},
   {
-    "assembly": "VietHistory.AI", "class": "VietHistory.AI.Gemini.GeminiStudyService", "reportPath": "VietHistory.AI_GeminiStudyService.html", "methodName": "ExtractText(System.Text.Json.JsonElement)", "methodShortName": "ExtractText(...)", "fileIndex": 0, "line": 274,
+    "assembly": "VietHistory.AI", "class": " VietHistory.Infrastructure.Services.Gemini.GeminiStudyService", "reportPath": "VietHistory.AI_GeminiStudyService.html", "methodName": "ExtractText(System.Text.Json.JsonElement)", "methodShortName": "ExtractText(...)", "fileIndex": 0, "line": 274,
     "metrics": [
       { "value": 26, "exceeded": false },
       { "value": 26, "exceeded": true },
     ]},
   {
-    "assembly": "VietHistory.AI", "class": "VietHistory.AI.Gemini.GeminiStudyService", "reportPath": "VietHistory.AI_GeminiStudyService.html", "methodName": "AskAsync()", "methodShortName": "AskAsync()", "fileIndex": 0, "line": 50,
+    "assembly": "VietHistory.AI", "class": " VietHistory.Infrastructure.Services.Gemini.GeminiStudyService", "reportPath": "VietHistory.AI_GeminiStudyService.html", "methodName": "AskAsync()", "methodShortName": "AskAsync()", "fileIndex": 0, "line": 50,
     "metrics": [
       { "value": 20, "exceeded": false },
       { "value": 20, "exceeded": true },
