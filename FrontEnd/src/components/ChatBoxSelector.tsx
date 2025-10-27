@@ -116,7 +116,7 @@ const ChatBoxSelector: React.FC<ChatBoxSelectorProps> = ({ currentBoxId, onSelec
       <div className="selector-header">
         <h3>📁 Chat Boxes</h3>
         <button onClick={() => setShowNewBoxForm(!showNewBoxForm)} className="btn-new">
-          ➕
+          ✨
         </button>
       </div>
 
@@ -156,7 +156,7 @@ const ChatBoxSelector: React.FC<ChatBoxSelectorProps> = ({ currentBoxId, onSelec
 
       {boxes.length === 0 && (
         <div className="empty-state">
-          Chưa có chat box nào. Nhấn ➕ để tạo mới!
+          Chưa có chat box nào. Nhấn ✨ để tạo mới!
         </div>
       )}
     </div>

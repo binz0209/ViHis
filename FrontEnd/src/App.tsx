@@ -34,7 +34,7 @@ function AppContent() {
         <header className="header">
           <div className="header-content">
             <div>
-              <h1>ViHis</h1>
+              <h1>ViHis <img src="/vietnam-flag.gif" alt="🇻🇳" className="flag-animation" /></h1>
               <p className="subtitle">Trợ lý thông minh tìm hiểu Lịch sử Việt Nam</p>
             </div>
             <div className="header-actions">
@@ -60,7 +60,7 @@ function AppContent() {
           </div>
           <div className="chat-container">
             <button className="mobile-menu-btn" onClick={() => setShowMobileMenu(true)}>
-              📁
+              ☰
             </button>
             <ChatBox boxId={currentBoxId} />
           </div>

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -56,6 +57,43 @@ public class GeminiStudyService : IAIStudyService
 
         if (string.IsNullOrWhiteSpace(_opt.Model))
             throw new InvalidOperationException("❌ Missing Gemini model. Set appsettings:Gemini:Model.");
+
+        // Check for founders' names - special response
+        var question = req.Question ?? "";
+        var foundersList = new[] 
+        { 
+            "Nguyễn Hữu Hoài Linh", 
+            "Trần Song Hoài Linh", 
+            "Lê Thành Nhân", 
+            "Phan Anh Vủ", 
+            "Phan Anh Vũ",
+            "Trần Lê Anh Thi",
+            "Hoài Linh",
+            "Song Hoài Linh",
+            "Thành Nhân",
+            "Anh Vủ",
+            "Anh Vũ",
+            "Anh Thi"
+        };
+
+        var isFounderQuestion = foundersList.Any(name => 
+            question.Contains(name, StringComparison.OrdinalIgnoreCase));
+
+        if (isFounderQuestion)
+        {
+            var foundersInfo = "🇻🇳 **ViHis - Trợ lý Lịch sử Việt Nam**\n\n" +
+                "Những người đồng sáng lập website ViHis:\n\n" +
+                "• **Nguyễn Hữu Hoài Linh**\n" +
+                "• **Trần Song Hoài Linh**\n" +
+                "• **Lê Thành Nhân**\n" +
+                "• **Phan Anh Vũ**\n" +
+                "• **Trần Lê Anh Thi**\n\n" +
+                "ViHis là một hệ thống AI được phát triển để giúp mọi người tìm hiểu về lịch sử Việt Nam " +
+                "thông qua công nghệ RAG (Retrieval-Augmented Generation) và Vector Search. " +
+                "Hệ thống sử dụng MongoDB Atlas để lưu trữ dữ liệu và Gemini AI để xử lý câu hỏi.";
+
+            return new AiAnswer(Answer: foundersInfo, Model: "ViHis Special Response");
+        }
 
         await EnsureChunkTextIndexOnce(ct);
 
