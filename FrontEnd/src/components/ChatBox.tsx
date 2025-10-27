@@ -12,6 +12,7 @@ interface Message {
   text: string
   sender: 'user' | 'assistant'
   timestamp: Date
+  responseTime?: number // Time in milliseconds
 }
 
 interface ChatBoxProps {
@@ -68,7 +69,11 @@ const ChatBox: React.FC<ChatBoxProps> = ({ boxId }) => {
     // Debounce save by 1 second
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        const machineId = localStorage.getItem('viet-history-machine-id') || ''
+        let machineId = localStorage.getItem('viet-history-machine-id')
+        if (!machineId) {
+          machineId = `machine-${Date.now()}`
+          localStorage.setItem('viet-history-machine-id', machineId)
+        }
         await saveBoxMessages(currentBoxId, user?.id, machineId, messages)
         console.log('✅ Messages saved to box:', currentBoxId, '- Message count:', messages.length)
       } catch (error) {
@@ -104,6 +109,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({ boxId }) => {
     setInput('')
     setLoading(true)
 
+    // Track start time for response time calculation
+    const startTime = Date.now()
+
     // Get chat history BEFORE adding new message (current messages are context)
     const chatHistoryForAI = messages.map(m => ({
       id: m.id,
@@ -119,7 +127,11 @@ const ChatBox: React.FC<ChatBoxProps> = ({ boxId }) => {
       // If no boxId, create a new box first
       let boxToUse = currentBoxId
       if (!boxToUse) {
-        const machineId = localStorage.getItem('viet-history-machine-id') || ''
+        let machineId = localStorage.getItem('viet-history-machine-id')
+        if (!machineId) {
+          machineId = `machine-${Date.now()}`
+          localStorage.setItem('viet-history-machine-id', machineId)
+        }
         console.log('📦 Creating new box...')
         boxToUse = await saveBoxMessages('', user?.id, machineId, [userMessage])
         console.log('✅ Created box:', boxToUse)
@@ -129,6 +141,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({ boxId }) => {
       // Get AI response with chat history for context
       console.log('🧠 Sending chat history as context (', chatHistoryForAI.length, 'messages)')
       const response = await sendMessage(input.trim(), chatHistoryForAI, currentBoxId)
+      
+      // Calculate response time
+      const responseTime = Date.now() - startTime
+      
       // Decode HTML entities in the response
       const decodedAnswer = decodeHtmlEntities(response.answer)
       const assistantMessage: Message = {
@@ -136,6 +152,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ boxId }) => {
         text: decodedAnswer,
         sender: 'assistant',
         timestamp: new Date(),
+        responseTime: responseTime,
       }
       setMessages(prev => [...prev, assistantMessage])
     } catch (error) {
@@ -170,26 +187,76 @@ const ChatBox: React.FC<ChatBoxProps> = ({ boxId }) => {
     }
   }
 
-  const handleExportHistory = () => {
-    const exportData = {
-      boxId: currentBoxId,
-      exportedAt: new Date().toISOString(),
-      messageCount: messages.length,
-      messages: messages.map(m => ({
-        ...m,
-        timestamp: m.timestamp.toISOString()
-      }))
+  const handleExampleClick = async (question: string) => {
+    if (loading) return
+    
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: question,
+      sender: 'user',
+      timestamp: new Date(),
     }
-    const json = JSON.stringify(exportData, null, 2)
-    const blob = new Blob([json], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `viet-history-chat-${new Date().toISOString()}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+
+    setInput('')
+    setLoading(true)
+
+    // Track start time for response time calculation
+    const startTime = Date.now()
+
+    // Get chat history BEFORE adding new message (current messages are context)
+    const chatHistoryForAI = messages.map(m => ({
+      id: m.id,
+      text: m.text,
+      sender: m.sender,
+      timestamp: m.timestamp.toISOString()
+    }))
+
+    // Add user message to UI
+    setMessages(prev => [...prev, userMessage])
+
+    try {
+      // If no boxId, create a new box first
+      let boxToUse = currentBoxId
+      if (!boxToUse) {
+        let machineId = localStorage.getItem('viet-history-machine-id')
+        if (!machineId) {
+          machineId = `machine-${Date.now()}`
+          localStorage.setItem('viet-history-machine-id', machineId)
+        }
+        console.log('📦 Creating new box...')
+        boxToUse = await saveBoxMessages('', user?.id, machineId, [userMessage])
+        console.log('✅ Created box:', boxToUse)
+        setCurrentBoxId(boxToUse)
+      }
+
+      // Get AI response with chat history for context  
+      console.log('🧠 Sending chat history as context (', chatHistoryForAI.length, 'messages)')
+      const response = await sendMessage(question, chatHistoryForAI, currentBoxId)
+      
+      // Calculate response time
+      const responseTime = Date.now() - startTime
+      // Decode HTML entities in the response
+      const decodedAnswer = decodeHtmlEntities(response.answer)
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: decodedAnswer,
+        sender: 'assistant',
+        timestamp: new Date(),
+        responseTime: responseTime,
+      }
+      setMessages(prev => [...prev, assistantMessage])
+    } catch (error) {
+      console.error('Error sending message:', error)
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'Xin lỗi, đã có lỗi xảy ra khi xử lý câu hỏi của bạn. Vui lòng thử lại.',
+        sender: 'assistant',
+        timestamp: new Date(),
+      }
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -201,13 +268,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({ boxId }) => {
               💬 {messages.length} tin nhắn {currentBoxId ? `| Box: ${currentBoxId.substring(0, 8)}...` : ''}
             </span>
             <div className="chat-actions">
-              <button 
-                className="icon-button" 
-                onClick={handleExportHistory}
-                title="Xuất lịch sử chat"
-              >
-                📥
-              </button>
               <button 
                 className="icon-button" 
                 onClick={handleClearHistory}
@@ -226,9 +286,15 @@ const ChatBox: React.FC<ChatBoxProps> = ({ boxId }) => {
               <div className="example-questions">
                 <p>Ví dụ:</p>
                 <ul>
-                  <li>"Chiến thắng Điện Biên Phủ diễn ra năm nào?"</li>
-                  <li>"Kể tôi nghe về cuộc khởi nghĩa Hai Bà Trưng"</li>
-                  <li>"Ai là vị vua đầu tiên của triều Nguyễn?"</li>
+                  <li onClick={() => handleExampleClick("Chiến thắng Điện Biên Phủ diễn ra năm nào?")}>
+                    "Chiến thắng Điện Biên Phủ diễn ra năm nào?"
+                  </li>
+                  <li onClick={() => handleExampleClick("Kể tôi nghe về cuộc khởi nghĩa Hai Bà Trưng")}>
+                    "Kể tôi nghe về cuộc khởi nghĩa Hai Bà Trưng"
+                  </li>
+                  <li onClick={() => handleExampleClick("Ai là vị vua đầu tiên của triều Nguyễn?")}>
+                    "Ai là vị vua đầu tiên của triều Nguyễn?"
+                  </li>
                 </ul>
               </div>
             </div>
@@ -248,6 +314,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({ boxId }) => {
                       hour: '2-digit', 
                       minute: '2-digit' 
                     })}
+                    {msg.responseTime && (
+                      <span className="response-time"> • {(msg.responseTime / 1000).toFixed(1)}s</span>
+                    )}
                   </div>
                 </div>
               </div>

@@ -33,7 +33,7 @@ const ChatBoxSelector: React.FC<ChatBoxSelectorProps> = ({ currentBoxId, onSelec
     try {
       setLoading(true)
       const userId = isAuthenticated && user ? user.id : undefined
-      const machineId = localStorage.getItem('viet-history-machine-id') || ''
+      const machineId = localStorage.getItem('viet-history-machine-id') || undefined
       
       const boxes = await getChatBoxes(userId, machineId)
       setBoxes(boxes)
@@ -54,7 +54,7 @@ const ChatBoxSelector: React.FC<ChatBoxSelectorProps> = ({ currentBoxId, onSelec
     
     try {
       // Create new box by sending empty message with new box name
-      const machineId = localStorage.getItem('viet-history-machine-id') || ''
+      const machineId = localStorage.getItem('viet-history-machine-id') || `machine-${Date.now()}`
       
       const response = await api.post('/api/v1/chat/history', {
         boxId: '', // Empty to create new

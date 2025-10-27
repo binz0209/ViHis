@@ -52,9 +52,34 @@ var geminiOptions = new GeminiOptions
              ?? builder.Configuration["Gemini:GoogleSearchCx"]
 };
 builder.Services.AddSingleton(geminiOptions);
+
+// Register Embedding Service (optional, fallback to text search if not available)
+var embeddingApiKey = builder.Configuration["Gemini:ApiKey"] ?? "";
+var embeddingModel = builder.Configuration["Gemini:EmbeddingModel"] ?? "text-embedding-004";
+builder.Services.AddHttpClient<EmbeddingService>(c => c.Timeout = TimeSpan.FromSeconds(60));
+builder.Services.AddScoped(sp =>
+{
+    if (!string.IsNullOrEmpty(embeddingApiKey))
+    {
+        var httpFactory = sp.GetRequiredService<IHttpClientFactory>();
+        var http = httpFactory.CreateClient(nameof(EmbeddingService));
+        return new EmbeddingService(http, embeddingApiKey, embeddingModel);
+    }
+    return null as EmbeddingService;
+});
+
 builder.Services.AddHttpClient<IAIStudyService, GeminiStudyService>(c => c.Timeout = TimeSpan.FromSeconds(60));
 builder.Services.AddScoped<IAIStudyService, GeminiStudyService>();
-builder.Services.AddScoped<KWideRetriever>();
+
+// Register KWideRetriever with EmbeddingService (if available)
+builder.Services.AddScoped(sp =>
+{
+    var ctx = sp.GetRequiredService<IMongoContext>();
+    var embeddingService = sp.GetRequiredService<EmbeddingService?>();
+    return embeddingService != null 
+        ? new KWideRetriever(ctx, embeddingService)
+        : new KWideRetriever(ctx);
+});
 
 // ================= Ingest Services (PDF → chunks) =================
 builder.Services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();

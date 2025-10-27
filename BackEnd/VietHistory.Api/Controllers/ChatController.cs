@@ -2,6 +2,7 @@ using System;
 using Microsoft.AspNetCore.Mvc;
 using VietHistory.Domain.Entities;
 using VietHistory.Infrastructure.Mongo;
+using VietHistory.Application.DTOs;
 using MongoDB.Driver;
 
 namespace VietHistory.Api.Controllers;
@@ -237,10 +238,10 @@ public class SaveChatHistoryRequest
     public string? UserId { get; set; }
     public string? BoxId { get; set; }
     public string? BoxName { get; set; }
-    public List<ChatMessageDto> Messages { get; set; } = new();
+    public List<ChatMessageRequest> Messages { get; set; } = new();
 }
 
-public class ChatMessageDto
+public class ChatMessageRequest
 {
     public string Id { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;

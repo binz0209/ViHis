@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using Microsoft.Extensions.Caching.Memory;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using VietHistory.Application.DTOs.Ingest;
 using VietHistory.Infrastructure.Mongo;
@@ -9,16 +10,25 @@ namespace VietHistory.Infrastructure.Services.AI
     /// <summary>
     /// K-Wide retrieval với caching và truy vấn song song.
     /// Mục tiêu: tốc độ cao ngay cả khi lấy maxContext = 20.
+    /// Hỗ trợ cả text search và vector search.
     /// </summary>
     public sealed class KWideRetriever
     {
         private readonly IMongoContext _ctx;
+        private readonly EmbeddingService? _embeddingService;
         private static readonly MemoryCache Cache = new(new MemoryCacheOptions());
         private const int CacheMinutes = 15;
 
         public KWideRetriever(IMongoContext ctx)
         {
             _ctx = ctx;
+            _embeddingService = null;
+        }
+
+        public KWideRetriever(IMongoContext ctx, EmbeddingService embeddingService)
+        {
+            _ctx = ctx;
+            _embeddingService = embeddingService;
         }
 
         public async Task<List<ChunkDoc>> GetKWideChunksAsync(
@@ -34,33 +44,26 @@ namespace VietHistory.Infrastructure.Services.AI
             if (Cache.TryGetValue(key, out List<ChunkDoc>? cached))
                 return cached!;
 
-            // 1️⃣ Query top-k chunk
-            var filter = Builders<ChunkDoc>.Filter.Text(question);
-            var sort = Builders<ChunkDoc>.Sort.MetaTextScore("score");
+            List<ChunkDoc> baseChunks;
 
-            var projection = Builders<ChunkDoc>.Projection
-                .Include(x => x.SourceId)
-                .Include(x => x.ChunkIndex)
-                .Include(x => x.Content)
-                .Include(x => x.PageFrom)
-                .Include(x => x.PageTo);
-
-            var baseChunks = await _ctx.Chunks
-                .Find(filter)
-                .Project<ChunkDoc>(projection)
-                .Sort(sort)
-                .Limit(k)
-                .ToListAsync(ct);
-
-
-            // Fallback regex (chỉ khi không có index)
-            if (baseChunks.Count == 0)
+            // Try vector search first (nếu có embedding service)
+            if (_embeddingService != null)
             {
-                var regex = new MongoDB.Bson.BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(question), "i");
-                baseChunks = await _ctx.Chunks
-                    .Find(Builders<ChunkDoc>.Filter.Regex(x => x.Content, regex))
-                    .Limit(k)
-                    .ToListAsync(ct);
+                try
+                {
+                    var queryEmbedding = await _embeddingService.GenerateQueryEmbeddingAsync(question, ct);
+                    baseChunks = await VectorSearchAsync(queryEmbedding, k, ct);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Vector search failed, falling back to text search: {ex.Message}");
+                    baseChunks = await TextSearchAsync(question, k, ct);
+                }
+            }
+            else
+            {
+                // Use text search
+                baseChunks = await TextSearchAsync(question, k, ct);
             }
 
             if (baseChunks.Count == 0)
@@ -107,6 +110,65 @@ namespace VietHistory.Infrastructure.Services.AI
             Cache.Set(key, result, TimeSpan.FromMinutes(CacheMinutes));
 
             return result;
+        }
+
+        private async Task<List<ChunkDoc>> VectorSearchAsync(List<float> queryEmbedding, int k, CancellationToken ct)
+        {
+            var pipeline = new BsonDocument[]
+            {
+                new BsonDocument("$vectorSearch", new BsonDocument
+                {
+                    { "index", "vector_index" },
+                    { "path", "embedding" },
+                    { "queryVector", new BsonArray(queryEmbedding.Select(v => new BsonDouble(v))) },
+                    { "numCandidates", k * 2 },
+                    { "limit", k }
+                }),
+                new BsonDocument("$project", new BsonDocument
+                {
+                    { "_id", 1 },
+                    { "sourceId", 1 },
+                    { "chunkIndex", 1 },
+                    { "content", 1 },
+                    { "pageFrom", 1 },
+                    { "pageTo", 1 }
+                })
+            };
+
+            var results = await _ctx.Chunks.Aggregate<ChunkDoc>(pipeline, cancellationToken: ct).ToListAsync(ct);
+            return results;
+        }
+
+        private async Task<List<ChunkDoc>> TextSearchAsync(string question, int k, CancellationToken ct)
+        {
+            var filter = Builders<ChunkDoc>.Filter.Text(question);
+            var sort = Builders<ChunkDoc>.Sort.MetaTextScore("score");
+
+            var projection = Builders<ChunkDoc>.Projection
+                .Include(x => x.SourceId)
+                .Include(x => x.ChunkIndex)
+                .Include(x => x.Content)
+                .Include(x => x.PageFrom)
+                .Include(x => x.PageTo);
+
+            var chunks = await _ctx.Chunks
+                .Find(filter)
+                .Project<ChunkDoc>(projection)
+                .Sort(sort)
+                .Limit(k)
+                .ToListAsync(ct);
+
+            // Fallback regex (chỉ khi không có index)
+            if (chunks.Count == 0)
+            {
+                var regex = new BsonRegularExpression(System.Text.RegularExpressions.Regex.Escape(question), "i");
+                chunks = await _ctx.Chunks
+                    .Find(Builders<ChunkDoc>.Filter.Regex(x => x.Content, regex))
+                    .Limit(k)
+                    .ToListAsync(ct);
+            }
+
+            return chunks;
         }
     }
 }
