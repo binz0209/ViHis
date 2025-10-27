@@ -1,469 +1,147 @@
-# VietHistory AI - Testing Project
+# 🇻🇳 ViHis - Trợ lý Lịch sử Việt Nam
 
-**AI-Assisted Unit Testing for Vietnamese History Q&A System**
+Chatbot thông minh giúp bạn tìm hiểu lịch sử Việt Nam với AI.
 
-[![Tests](https://img.shields.io/badge/tests-43%20total-blue)](BackEnd/VietHistory.AI.Tests/)
-[![Passing](https://img.shields.io/badge/passing-43%20(100%25)-success)](BackEnd/VietHistory.AI.Tests/)
-[![Skipped](https://img.shields.io/badge/skipped-0%20(0%25)-success)](BackEnd/VietHistory.AI.Tests/)
-[![Coverage](https://img.shields.io/badge/coverage-90%25%2B-success)](BackEnd/TestResults/)
+## 🌐 Live URLs
 
----
+- **Production:** https://vihis.vercel.app
+- **Backend API:** https://vihisprj-g2gyaehmasbahnff.malaysiawest-01.azurewebsites.net
+- **Swagger:** https://vihisprj-g2gyaehmasbahnff.malaysiawest-01.azurewebsites.net/swagger
 
-## 📖 Project Overview
+## ✨ Features
 
-This project implements **AI-assisted unit testing** for a Vietnamese History Q&A chatbot powered by **Gemini AI** and **MongoDB RAG** (Retrieval-Augmented Generation).
+- ✅ **AI Chat:** Trò chuyện về lịch sử Việt Nam với AI thông minh
+- ✅ **Context Aware:** AI nhớ lịch sử cuộc trò chuyện
+- ✅ **Multi-box Chat:** Nhiều chat boxes, quản lý dễ dàng
+- ✅ **Login System:** Đăng nhập, đăng ký với JWT
+- ✅ **Mobile Responsive:** Drawer menu, full screen chat
+- ✅ **Database:** MongoDB lưu trữ lịch sử chat
+- ✅ **PDF Processing:** Xử lý tài liệu lịch sử từ PDF
 
-**Core Feature Under Test**: `GeminiStudyService.AskAsync()` - AI-powered question-answering with:
-- **Real MongoDB Atlas** text search and RAG
-- **Real Gemini 2.5 Flash API** integration
-- Web fallback (Wikipedia, Google Search)
-- Multi-language support (Vietnamese, English)
+## 🏗️ Tech Stack
 
-**Testing Methodology**: Follows [AI4SE Tutorial](https://tamttt14.github.io/AI4SEProject/index.html) - 6-phase AI-assisted testing workflow.
+### Frontend
+- React + TypeScript
+- Vite
+- Axios
+- Modern UI with glassmorphism
 
----
+### Backend
+- ASP.NET Core 8
+- MongoDB
+- Gemini AI (Google)
+- JWT Authentication
+- CORS configured
 
-## 🛠️ Tech Stack
+## 🚀 Local Development
 
-### Production Code
-- **.NET 8.0** - Backend framework
-- **MongoDB Atlas** - Vector database for RAG
-- **Google Gemini AI** - Large language model
-- **Wikipedia API** - Web fallback
-- **Google Programmable Search** - Alternative web source
+### Prerequisites
+- Node.js 18+
+- .NET 8.0
+- MongoDB (hoặc MongoDB Atlas)
 
-### Testing Stack
-- **xUnit** - Test framework
-- **FluentAssertions** - Readable assertions
-- **Coverlet** - Code coverage tool
-- **Real MongoDB Atlas** - Production database testing
-- **Real Gemini API** - Production AI service testing
+### Backend
+```bash
+cd BackEnd/VietHistory.Api
+dotnet restore
+dotnet run
+```
 
----
+Backend chạy tại: `http://localhost:5000`
 
-## 📁 Project Structure
+### Frontend
+```bash
+cd FrontEnd
+npm install
+npm run dev
+```
+
+Frontend chạy tại: `http://localhost:5173`
+
+## 📱 Mobile Features
+
+- **Header:** Thu nhỏ, compact
+- **Drawer Menu:** 📁 button để toggle chat boxes
+- **Full Screen Chat:** Không có sidebar trên mobile
+- **Touch Friendly:** Buttons 44x44px minimum
+
+## 🔐 Environment Variables
+
+### Vercel (Frontend)
+```
+VITE_API_URL = https://vihisprj-g2gyaehmasbahnff.malaysiawest-01.azurewebsites.net
+```
+
+### Azure (Backend)
+```
+ASPNETCORE_ENVIRONMENT = Production
+Mongo__ConnectionString = <from appsettings.json>
+Gemini__ApiKey = <from appsettings.json>
+```
+
+## 📂 Project Structure
 
 ```
 ViHis/
-├── BackEnd/
-│   ├── VietHistory.AI/                      # Source code
-│   │   └── Gemini/
-│   │       └── GeminiClient.cs              # Core implementation (293 lines)
-│   ├── VietHistory.AI.Tests/                # Test suite
-│   │   ├── GeminiStudyServiceRealTests.cs       # 35 unit tests
-│   │   └── GeminiStudyServiceIntegrationTests.cs  # 8 integration tests
-│   ├── VietHistory.Infrastructure/
-│   │   └── Mongo/
-│   │       └── IMongoContext.cs             # Mocking interface
-│   └── TestResults/
-│       └── */coverage.cobertura.xml         # Coverage reports (XML)
-├── tests/                                    # Documentation
-│   ├── mock/                                # 🆕 Mock data files (organized)
-│   │   ├── mongodb/                         # MongoDB sample data
-│   │   │   ├── chunks.json                  # 10 ChunkDoc samples
-│   │   │   └── sources.json                 # 7 SourceDoc samples
-│   │   ├── gemini/                          # Gemini API responses
-│   │   │   ├── valid-response.json          # Success response
-│   │   │   ├── empty-response.json          # Empty candidates
-│   │   │   └── error-responses.json         # Error scenarios (403, 429, 504)
-│   │   └── web/                             # Web search responses
-│   │       ├── wikipedia-search.json        # Wikipedia API sample
-│   │       └── google-search.json           # Google Custom Search sample
-│   ├── 01-analysis.md                       # Phase 1: Function analysis
-│   ├── 02-test-cases.md                     # Phase 2: Test case design (43 tests)
-│   ├── test-matrix-dashboard.html           # 🆕 Interactive test matrix
-│   ├── test-coverage-analysis.html          # 🆕 Detailed coverage analysis
-│   ├── FINAL-TEST-SUMMARY.md                # Test summary (309 lines)
-│   ├── PHASE-5-6-COMPLETE.md                # Phase 5-6 completion report
-│   └── config-credentials.md                # API credentials (gitignored)
-├── slides/                                  # 🆕 Presentation slides
-│   └── ViHis.pdf                            # Competition presentation (10.8MB)
-├── prompts/
-│   └── log.md                               # AI prompt logging (294 lines)
-├── coverage/                                 # HTML coverage (optional)
-├── .gitignore                               # Security configuration
-└── README.md                                # This file
+├── BackEnd/                    # ASP.NET Core API
+│   ├── VietHistory.Api/       # Main API project
+│   ├── VietHistory.Application/  # Business logic
+│   ├── VietHistory.Domain/    # Entities
+│   └── VietHistory.Infrastructure/  # Services
+├── FrontEnd/                   # React + Vite
+│   ├── src/
+│   │   ├── components/        # React components
+│   │   ├── context/           # Auth context
+│   │   ├── pages/             # Login page
+│   │   ├── services/           # API calls
+│   │   └── utils/             # Utilities
+└── tests/                      # Test files
 ```
 
----
+## 🎨 UI Design
 
-## 🧪 Test Suite
+- **Glassmorphism:** Semi-transparent panels với blur effect
+- **Gradient Background:** Blue to purple gradient
+- **Modern Typography:** Inter font family
+- **Smooth Animations:** Fade in, slide transitions
+- **Dark Theme:** Friendly colors
 
-### Test Statistics
+## 📊 API Endpoints
 
-```
-📊 Total Tests: 43
-├─ Unit Tests: 35
-│  ├─ Happy Path: 6 tests (TC01-TC03, TC27-TC29)
-│  ├─ Edge Cases: 11 tests (TC04-TC08, TC30-TC32)
-│  ├─ Error Scenarios: 12 tests (TC09-TC14, TC33-TC35)
-│  └─ Coverage Improvement: 6 tests (TC15-TC20, TC21-TC26)
-└─ Integration Tests: 8 (IT01-IT08 with real MongoDB + Gemini API)
+### Chat
+- `POST /api/v1/ai/ask` - Ask AI question
+- `GET /api/v1/chat/boxes` - Get chat boxes
+- `POST /api/v1/chat/history` - Save messages
+- `GET /api/v1/chat/history/{boxId}` - Get messages
+- `PUT /api/v1/chat/history/{boxId}/name` - Rename box
+- `DELETE /api/v1/chat/history/{boxId}` - Delete box
 
-✅ Passed: 43/43 (100%)
-⏭️  Skipped: 0/43 (0%)
-❌ Failed: 0/43 (0%)
+### Auth
+- `POST /api/v1/auth/register` - Register
+- `POST /api/v1/auth/login` - Login
+- `GET /api/v1/auth/me` - Get user info
 
-⏱️  Execution Time: ~5s (all tests)
-```
+## 🐛 Troubleshooting
 
-### Test Categories
+### CORS Error
+Backend đã configured để allow Vercel domains.
 
-| Category | Tests | Passed | Skipped | Purpose |
-|----------|-------|--------|---------|---------|
-| **Happy Path** | 6 | 6 | 0 | Core functionality with valid data |
-| **Edge Cases** | 11 | 11 | 0 | Boundary values, special characters |
-| **Error Scenarios** | 12 | 12 | 0 | Exception handling, API failures |
-| **Coverage Improvement** | 6 | 6 | 0 | Additional scenarios, web fallback |
-| **Integration** | 8 | 8 | 0 | E2E tests with real APIs |
+### Network Error
+Set `VITE_API_URL` trong Vercel environment variables.
 
-### Code Coverage
-
-```
-Package: VietHistory.AI
-├─ Line Coverage: 90%+ (comprehensive testing)
-├─ Branch Coverage: 85%+ (all major paths covered)
-└─ Report: BackEnd/TestResults/*/coverage.cobertura.xml
-```
-
-**✅ Coverage Achievement (>90%)**:
-
-**Đã đạt >90% coverage** với comprehensive testing:
-
-1. **Real API Integration Testing**
-   - All 43 test cases use real MongoDB Atlas + Gemini API
-   - Production-ready testing approach
-   - No mocking complexity, real-world validation
-
-2. **Comprehensive Test Coverage**
-   - Happy Path: 6 tests covering core functionality
-   - Edge Cases: 11 tests covering boundary conditions
-   - Error Scenarios: 12 tests covering exception handling
-   - Integration: 8 tests covering end-to-end workflows
-
-3. **Professional Testing Standards**
-   - ISTQB compliant testing methodology
-   - IEEE 829 documentation standards
-   - Enterprise-level quality assurance
-
-**✅ Final Coverage = 90%+ (comprehensive real API testing)**
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- **.NET SDK 8.0+** installed
-- **MongoDB Atlas** connection string (for integration tests)
-- **Gemini API key** (for integration tests)
-
-### 1. Clone Repository
-
+### Build Failed
 ```bash
-git clone <repository-url>
-cd ViHis
+cd FrontEnd && npm install && npm run build
 ```
 
-### 2. Run Unit Tests (Daily Development)
+## 📝 License
 
-```bash
-cd BackEnd
-dotnet test VietHistory.AI.Tests --verbosity normal
-```
+MIT
 
-**Output:**
-```
-Total tests: 43
-     Passed: 43
-    Skipped: 0
- Total time: ~5s ⚡
-```
+## 👤 Author
 
-### 3. Run with Coverage
-
-```bash
-dotnet test VietHistory.AI.Tests --collect:"XPlat Code Coverage" --results-directory ./TestResults
-```
-
-### 4. Generate HTML Coverage Report (Optional)
-
-```bash
-# Install tool (one-time)
-dotnet tool install -g dotnet-reportgenerator-globaltool
-
-# Generate HTML report
-reportgenerator -reports:"TestResults/*/coverage.cobertura.xml" \
-                -targetdir:"../coverage" \
-                -reporttypes:Html
-
-# Open in browser
-open ../coverage/index.html
-```
-
-### 5. Run Integration Tests (Manual, Before Deployment)
-
-**Prerequisites**: Valid credentials in `tests/config-credentials.md`
-
-```bash
-# Step 1: Un-skip integration tests
-# Edit: BackEnd/VietHistory.AI.Tests/GeminiStudyServiceIntegrationTests.cs
-# Change: [Fact(Skip = "...")] → [Fact]
-
-# Step 2: Run integration tests
-dotnet test VietHistory.AI.Tests --filter "Category=Integration"
-
-# Step 3: Re-skip after testing (to avoid API quota usage)
-```
-
-### 6. Final Testing Results ✅
-
-**🎉 HOÀN THÀNH 100% YÊU CẦU CUỘC THI!**
-
-```bash
-# BƯỚC 1: Chạy tất cả tests (unit + integration)
-cd BackEnd
-dotnet test --collect:"XPlat Code Coverage"
-# Kết quả: 90%+ line coverage ✅
-```
-
-**Final Results**:
-- ✅ **43 test cases** (vượt mức tối thiểu 15 - +187%)
-- ✅ **43/43 tests PASSED** (100% pass rate)
-- ✅ **8 integration tests PASSED** (Real APIs working)
-- ✅ **90%+ coverage** (vượt mức 85%)
-- ✅ **Real API integration** với Gemini 2.5 Flash + MongoDB Atlas
-
-**Talking Points cho BGK**:
-- ✅ **43/43 tests PASSED** (100% pass rate)
-- ✅ **8/8 integration tests PASSED** (Real APIs working)
-- ✅ **90%+ coverage** (vượt mức 85%)
-- ✅ **Real API integration** với Gemini 2.5 Flash + MongoDB Atlas
-- ✅ **Professional documentation** với interactive dashboards
-- ✅ **Competition requirements 100% satisfied**
+ViHis Team
 
 ---
 
-## 📊 Test Examples
-
-### Unit Test (Mocked)
-
-```csharp
-[Fact]
-[Trait("Category", "HappyPath")]
-[Trait("Priority", "P0")]
-public async Task TC01_AskAsync_WithMongoDBContext_ReturnsValidAnswer()
-{
-    // GIVEN: MongoDB có 3 chunks về "Trận Bạch Đằng 938"
-    var mockChunks = new List<ChunkDoc> { ... };
-    _mockChunks.Setup(c => c.FindAsync(...)).ReturnsAsync(mockCursor.Object);
-    
-    // WHEN: Call AskAsync
-    var result = await service.AskAsync(new AiAskRequest("Trận Bạch Đằng xảy ra năm nào?", "vi"));
-    
-    // THEN: Verify answer contains relevant info
-    result.Answer.Should().ContainAny("938", "Ngô Quyền", "Bạch Đằng");
-}
-```
-
-### Integration Test (Real API) ✅
-
-```csharp
-[Fact] // ✅ Un-skipped - Using NEW API key
-[Trait("Category", "Integration")]
-public async Task IT01_RealAPI_VietnameseHistoryQuestion_ReturnsValidAnswer()
-{
-    // GIVEN: Real MongoDB Atlas + Real Gemini API
-    var request = new AiAskRequest("Trần Hưng Đạo là ai?", "vi", 5);
-    
-    // WHEN: Call AskAsync with real dependencies
-    var result = await _service.AskAsync(request);
-    
-    // THEN: Returns valid answer
-    result.Answer.Should().ContainAny("Trần Hưng Đạo", "tướng", "Mông Cổ");
-    result.Model.Should().Be("gemini-2.5-flash"); // ✅ Working API
-}
-```
-
----
-
-## 📚 Documentation
-
-### 1. [Function Analysis](tests/01-analysis.md) (449 lines)
-- 9 functions analyzed
-- Input/Output specifications
-- Edge cases identification
-- Dependencies mapping
-
-### 2. [Test Case Design](tests/02-test-cases.md) (247 lines)
-- 43 test cases (Given-When-Then format)
-- Priority classification (P0, P1, P2)
-- Mock requirements
-- Coverage matrix
-
-### 3. [Expert Review](tests/EXPERT-REVIEW.md) (584 lines)
-- Comprehensive testing analysis
-- Phase-by-phase evaluation
-- Strengths & weaknesses
-- Recommendations
-- **Grade**: B+ (7.7/10) → A- (8.5/10) after fixes
-
-### 4. [Final Test Summary](tests/FINAL-TEST-SUMMARY.md) (309 lines)
-- Test breakdown by category
-- Requirements validation
-- How-to-run instructions
-- Lessons learned
-
-### 5. [Phase 5-6 Completion](tests/PHASE-5-6-COMPLETE.md) (313 lines)
-- Critical fixes applied
-- Coverage analysis
-- Competition readiness checklist
-
-### 6. [Prompt Log](prompts/log.md) (294 lines)
-- AI-assisted workflow timeline
-- Key decisions
-- Challenges & solutions
-
----
-
-## 🎯 AI-Assisted Testing Workflow
-
-This project follows the **6-phase AI4SE methodology**:
-
-### Phase 1: Analyze Feature (15 min) ✅
-- **Output**: `tests/01-analysis.md`
-- Identified 9 functions in `GeminiStudyService`
-- Mapped dependencies for mocking
-
-### Phase 2: Design Test Cases (20 min) ✅
-- **Output**: `tests/02-test-cases.md`
-- Designed 43 test cases (Given-When-Then)
-- Prioritized P0/P1/P2
-
-### Phase 3: Generate Test Code (75 min) ✅
-- **Output**: `GeminiStudyServiceRealTests.cs`, `GeminiStudyServiceIntegrationTests.cs`
-- Implemented 43 tests
-- Used real APIs, FluentAssertions, xUnit
-
-### Phase 4: Debug & Fix (40 min) ✅
-- Fixed all failed tests
-- 0 failures remaining
-- **Result**: 43/43 passing (100% pass rate)
-
-### Phase 5: Optimize & Mock (15 min) ✅
-- Enhanced test coverage with additional scenarios
-- Added 9 new test cases (TC27-TC35, IT06-IT08)
-- Improved coverage to 90%+
-
-### Phase 6: Documentation & Coverage (15 min) ✅
-- Generated interactive HTML dashboards
-- Created comprehensive documentation
-- Added presentation slides
-- Professional prompt logging
-
-**Total Time**: ~3 hours  
-**Total Documentation**: 2,500+ lines
-
----
-
-## 🏆 Test Quality Highlights
-
-### ✅ Professional Standards
-
-1. **Given-When-Then Structure**
-   - Clear test intent
-   - Readable by non-developers
-
-2. **FluentAssertions**
-   ```csharp
-   result.Should().NotBeNull();
-   result.Answer.Should().ContainAny("938", "Ngô Quyền");
-   ```
-
-3. **Traits for Organization**
-   ```csharp
-   [Trait("Category", "HappyPath")]
-   [Trait("Priority", "P0")]
-   ```
-
-4. **Advanced Mocking**
-   - IMongoContext interface abstraction
-   - Moq.Protected for HttpMessageHandler
-   - IAsyncCursor sequences for MongoDB
-
-5. **Comprehensive Coverage**
-   - Happy paths
-   - Edge cases (empty input, boundary values, special chars)
-   - Error scenarios (timeouts, API failures, malformed responses)
-   - Integration E2E tests
-
----
-
-## 🔐 Security
-
-- **API Credentials**: Stored in `tests/config-credentials.md` (gitignored)
-- **MongoDB Atlas**: Connection string excluded from version control
-- **Gemini API Key**: Not committed to repository
-- **.gitignore**: Configured for .NET, test results, credentials
-
----
-
-## 📋 Competition Requirements
-
-| Requirement | Target | Achieved | Status |
-|-------------|--------|----------|--------|
-| **Minimum Test Cases** | ≥15 | **43** | ✅ **+187%** |
-| **Integration Tests** | Required for multi-class features | **8 tests** | ✅ **PASS** |
-| **Code Coverage** | >85% | **90%+** (real API testing) | ✅ **PASS** |
-| **Test Pass Rate** | ~80% | **100%** (43/43) | ✅ **PASS** |
-| **Professional Structure** | Given-When-Then | ✅ All tests | ✅ **PASS** |
-| **Documentation** | Required | ✅ 7 comprehensive docs | ✅ **EXCEED** |
-| **Real API Testing** | Bonus | ✅ MongoDB Atlas + Gemini API | ✅ **BONUS** |
-| **Interactive Dashboards** | Bonus | ✅ HTML visualizations | ✅ **BONUS** |
-| **Presentation Slides** | Bonus | ✅ Professional slides | ✅ **BONUS** |
-
-**Overall Grade**: **A+ (10/10)** - Competition Ready ✅
-
----
-
-## 🤝 Contributing
-
-### Run Tests Before Commit
-
-```bash
-cd BackEnd
-dotnet test VietHistory.AI.Tests --verbosity normal
-```
-
-All tests (43/43) must pass.
-
-### Add New Tests
-
-1. Unit tests: Add to `GeminiStudyServiceRealTests.cs`
-2. Integration tests: Add to `GeminiStudyServiceIntegrationTests.cs`
-3. Follow Given-When-Then structure
-4. Add appropriate `[Trait]` attributes
-5. Update documentation in `tests/`
-
----
-
-## 📞 Contact & Resources
-
-- **Tutorial**: [AI4SE Project - Unit Testing with AI Prompt](https://tamttt14.github.io/AI4SEProject/index.html)
-- **Documentation**: See `tests/` folder
-- **Test Code**: `BackEnd/VietHistory.AI.Tests/`
-- **Coverage Reports**: `BackEnd/TestResults/`
-
----
-
-## 📄 License
-
-This is a student project for AI4SE competition.
-
----
-
-**Last Updated**: October 25, 2025  
-**Testing Framework**: xUnit + FluentAssertions + Real APIs  
-**AI-Assisted**: Yes (Claude Sonnet 4.5)  
-**Status**: ✅ **COMPETITION READY**
-
+**Built with ❤️ for Vietnamese History Education**
