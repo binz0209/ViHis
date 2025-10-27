@@ -30,6 +30,10 @@ namespace VietHistory.Infrastructure.Mongo
         public IMongoCollection<SourceDoc> Sources => Db.GetCollection<SourceDoc>("sources");
         public IMongoCollection<ChunkDoc> Chunks => Db.GetCollection<ChunkDoc>("chunks");
 
+        // ===== Chat History Collections =====
+        public IMongoCollection<ChatHistory> ChatHistories => Db.GetCollection<ChatHistory>("chatHistories");
+        public IMongoCollection<ChatMessage> ChatMessages => Db.GetCollection<ChatMessage>("chatMessages");
+
         public MongoContext(MongoSettings settings)
         {
             if (string.IsNullOrWhiteSpace(settings.ConnectionString))

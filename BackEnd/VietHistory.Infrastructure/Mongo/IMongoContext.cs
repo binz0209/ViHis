@@ -30,6 +30,10 @@ public interface IMongoContext
     IMongoCollection<SourceDoc> Sources { get; }
     IMongoCollection<ChunkDoc> Chunks { get; }
     
+    // Chat History collections
+    IMongoCollection<ChatHistory> ChatHistories { get; }
+    IMongoCollection<ChatMessage> ChatMessages { get; }
+    
     Task<bool> PingAsync();
 }
 

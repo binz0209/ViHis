@@ -84,7 +84,24 @@ public class GeminiStudyService : IAIStudyService
             "Khi có thể, hãy ghi rõ nguồn tham khảo (ví dụ: tên tài liệu hoặc URL) trong ngoặc vuông. " +
             "Nếu dữ liệu không tồn tại trong hệ thống, hãy nói rõ rằng: 'Trong cơ sở dữ liệu hiện tại của tôi, chưa có thông tin cụ thể về câu hỏi này.'";
 
+        // Build conversation context from chat history
+        var chatContext = "";
+        if (req.ChatHistory != null && req.ChatHistory.Count > 0)
+        {
+            var recentHistory = req.ChatHistory.TakeLast(6).ToList(); // Last 6 messages (3 exchanges)
+            chatContext = "Lịch sử cuộc trò chuyện gần đây:\n";
+            foreach (var msg in recentHistory)
+            {
+                var speaker = msg.Sender == "user" ? "Người dùng" : "Bạn";
+                chatContext += $"{speaker}: {msg.Text}\n";
+            }
+            chatContext += "\nDựa vào lịch sử cuộc trò chuyện trên, trả lời câu hỏi hiện tại của người dùng. Nếu người dùng dùng từ 'ông', 'bà', 'người này' v.v., hãy suy luận từ ngữ cảnh trước đó.\n\n";
+        }
+
         var parts = new List<object> { new { text = systemPrompt } };
+
+        if (!string.IsNullOrWhiteSpace(chatContext))
+            parts.Add(new { text = chatContext });
 
         if (!string.IsNullOrWhiteSpace(mongoContext))
             parts.Add(new { text = "Bối cảnh (trích từ tài liệu PDF):\n" + mongoContext });

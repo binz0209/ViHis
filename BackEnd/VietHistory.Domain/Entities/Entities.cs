@@ -1,3 +1,4 @@
+using System;
 using MongoDB.Bson.Serialization.Attributes;
 using VietHistory.Domain.Common;
 
@@ -103,4 +104,20 @@ public class AuditLog : BaseEntity
     [BsonElement("userId")] public string? UserId { get; set; }
     [BsonElement("action")] public string Action { get; set; } = string.Empty;
     [BsonElement("meta")] public Dictionary<string, string> Meta { get; set; } = new();
+}
+
+public class ChatMessage : BaseEntity
+{
+    [BsonElement("text")] public string Text { get; set; } = string.Empty;
+    [BsonElement("sender")] public string Sender { get; set; } = string.Empty; // "user" or "assistant"
+    [BsonElement("chatId")] public string ChatId { get; set; } = string.Empty;
+}
+
+public class ChatHistory : BaseEntity
+{
+    [BsonElement("machineId")] public string MachineId { get; set; } = string.Empty;
+    [BsonElement("userId")] public string? UserId { get; set; }
+    [BsonElement("name")] public string Name { get; set; } = "Chat";
+    [BsonElement("lastMessageAt")] public DateTime LastMessageAt { get; set; } = DateTime.UtcNow;
+    [BsonElement("messageIds")] public List<string> MessageIds { get; set; } = new();
 }
