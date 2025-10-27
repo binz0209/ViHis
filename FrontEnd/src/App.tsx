@@ -5,6 +5,7 @@ import ChatBoxSelector from './components/ChatBoxSelector'
 import ChatBox from './components/ChatBox'
 import Login from './pages/Login'
 import Quiz from './pages/Quiz'
+import { getChatBoxes } from './services/api'
 import './App.css'
 
 function AppContent() {
@@ -104,21 +105,7 @@ function AppContent() {
             } />
             <Route path="/chat" element={
               <>
-                <div className={`mobile-menu-overlay ${showMobileMenu ? 'active' : ''}`} 
-                     onClick={() => setShowMobileMenu(false)}></div>
-                <div className={`chat-selector-wrapper ${showMobileMenu ? 'active' : ''}`}>
-                  <ChatBoxSelector
-                    currentBoxId={currentBoxId}
-                    onSelectBox={(id) => { setShowMobileMenu(false); }}
-                    onCreateBox={() => { setShowMobileMenu(false); }}
-                  />
-                </div>
-                <div className="chat-container">
-                  <button className="mobile-menu-btn" onClick={() => setShowMobileMenu(true)}>
-                    ☰
-                  </button>
-                  <ChatBox boxId={currentBoxId} />
-                </div>
+                <AutoCreateChat />
               </>
             } />
             <Route path="/" element={
@@ -148,6 +135,50 @@ function AppContent() {
       </div>
     </div>
   )
+}
+
+const AutoCreateChat: React.FC = () => {
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  
+  useEffect(() => {
+    const createOrRedirectChat = async () => {
+      try {
+        const machineId = localStorage.getItem('viet-history-machine-id') || `machine-${Date.now()}`
+        const boxes = await getChatBoxes(user?.id, machineId)
+        
+        if (boxes.length > 0) {
+          // If user has existing boxes, redirect to most recent one
+          navigate(`/chat/${boxes[0].id}`)
+        } else {
+          // Create a new chat box
+          const response = await fetch('https://vihisprj-g2gyaehmasbahnff.malaysiawest-01.azurewebsites.net/api/v1/chat/history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              boxId: '',
+              machineId,
+              userId: user?.id,
+              boxName: 'Chat mới',
+              messages: []
+            })
+          })
+          
+          const data = await response.json()
+          if (data.boxId) {
+            navigate(`/chat/${data.boxId}`)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load or create chat:', error)
+        navigate('/')
+      }
+    }
+    
+    createOrRedirectChat()
+  }, [navigate, user])
+  
+  return <div>Đang tải...</div>
 }
 
 function App() {

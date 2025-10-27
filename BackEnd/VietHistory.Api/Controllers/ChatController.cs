@@ -148,7 +148,11 @@ public class ChatController : ControllerBase
 
             if (chatHistory == null)
             {
-                return Ok(new { messages = Array.Empty<object>() });
+                return Ok(new { 
+                    boxId = boxId,
+                    name = "Chat",
+                    messages = Array.Empty<object>() 
+                });
             }
 
             var messages = await _context.ChatMessages
