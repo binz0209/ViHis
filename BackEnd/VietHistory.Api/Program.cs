@@ -1,8 +1,11 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
-using  VietHistory.Infrastructure.Services.Gemini;
+using VietHistory.Infrastructure.Services.Gemini;
 using VietHistory.Application.Services;
 using VietHistory.Infrastructure.Mongo;
 using VietHistory.Infrastructure.Services;
@@ -61,10 +64,80 @@ builder.Services.AddSingleton<IFallbackAIngestor, FallbackAIngestor>();
 builder.Services.AddScoped<IPeopleService, PeopleService>();
 builder.Services.AddScoped<IEventsService, EventsService>();
 
-// ================= CORS (Allow All Domains) =================
-// ⚠️ Không nên bật AllowCredentials khi dùng AllowAnyOrigin (theo chuẩn CORS)
+// ================= JWT Authentication =================
+var jwtOptions = new JwtOptions
+{
+    Key = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is missing"),
+    Issuer = builder.Configuration["Jwt:Issuer"] ?? "VietHistory.Api",
+    Audience = builder.Configuration["Jwt:Audience"] ?? "VietHistory.Client",
+    ExpirationMinutes = int.TryParse(builder.Configuration["Jwt:ExpirationMinutes"], out var exp) ? exp : 60
+};
+builder.Services.AddSingleton(jwtOptions);
+builder.Services.AddSingleton<JwtService>();
+
+// Configure JWT Authentication
+var key = Encoding.UTF8.GetBytes(jwtOptions.Key);
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = true,
+        ValidIssuer = jwtOptions.Issuer,
+        ValidateAudience = true,
+        ValidAudience = jwtOptions.Audience,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddAuthorization();
+
+// ================= CORS =================
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? new[] { "http://localhost:3000", "http://localhost:5173", "http://localhost:3001" };
+
 builder.Services.AddCors(options =>
 {
+    // Development: Allow các origin cụ thể với credentials
+    options.AddPolicy("Development",
+        policy => policy
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()
+            .WithExposedHeaders("*"));
+
+    // Production: Allow origins trong config + Vercel domains
+    options.AddPolicy("Production",
+        policy => policy
+            .SetIsOriginAllowedToAllowWildcardSubdomains()
+            .WithOrigins(allowedOrigins)
+            .SetIsOriginAllowed(origin =>
+            {
+                // Allow localhost
+                if (origin.Contains("localhost") || origin.StartsWith("http://127.0.0.1"))
+                    return true;
+                
+                // Allow Vercel domains
+                if (origin.Contains("vercel.app"))
+                    return true;
+                
+                // Allow specific origins
+                return allowedOrigins.Contains(origin);
+            })
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()
+            .WithExposedHeaders("*"));
+
+    // Fallback: Allow tất cả (nếu cần cho integration testing)
     options.AddPolicy("AllowAll",
         policy => policy
             .AllowAnyOrigin()
@@ -86,8 +159,22 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// CORS cho tất cả domain
-app.UseCors("AllowAll");
+// CORS: Dùng Development cho dev, Production cho production
+var environment = app.Environment;
+if (environment.IsDevelopment())
+{
+    app.UseCors("Development");
+    Console.WriteLine($"✅ CORS Development enabled for: {string.Join(", ", allowedOrigins)}");
+}
+else
+{
+    app.UseCors("Production");
+    Console.WriteLine($"✅ CORS Production enabled for: {string.Join(", ", allowedOrigins)}");
+}
+
+// Authentication & Authorization
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
