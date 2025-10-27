@@ -33,7 +33,11 @@ const ChatBoxSelector: React.FC<ChatBoxSelectorProps> = ({ currentBoxId, onSelec
     try {
       setLoading(true)
       const userId = isAuthenticated && user ? user.id : undefined
-      const machineId = localStorage.getItem('viet-history-machine-id') || undefined
+      let machineId = localStorage.getItem('viet-history-machine-id')
+      if (!machineId) {
+        machineId = `machine-${Date.now()}`
+        localStorage.setItem('viet-history-machine-id', machineId)
+      }
       
       const boxes = await getChatBoxes(userId, machineId)
       setBoxes(boxes)
