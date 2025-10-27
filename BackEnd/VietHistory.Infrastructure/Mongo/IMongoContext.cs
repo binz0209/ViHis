@@ -34,6 +34,11 @@ public interface IMongoContext
     IMongoCollection<ChatHistory> ChatHistories { get; }
     IMongoCollection<ChatMessage> ChatMessages { get; }
     
+    // Quiz collections
+    IMongoCollection<Quiz> Quizzes { get; }
+    IMongoCollection<QuizQuestion> QuizQuestions { get; }
+    IMongoCollection<QuizAttempt> QuizAttempts { get; }
+    
     Task<bool> PingAsync();
 }
 

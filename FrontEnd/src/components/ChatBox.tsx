@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import './ChatBox.css'
 import { sendMessage, loadBoxMessages, saveBoxMessages, getApiClient } from '../services/api'
 import { decodeHtmlEntities } from '../utils/htmlDecoder'
@@ -21,16 +22,19 @@ interface ChatBoxProps {
 
 const ChatBox: React.FC<ChatBoxProps> = ({ boxId }) => {
   const { user } = useAuth()
-  const [currentBoxId, setCurrentBoxId] = useState<string | undefined>(boxId)
+  const { chatId } = useParams<{ chatId?: string }>()
+  const navigate = useNavigate()
+  const [currentBoxId, setCurrentBoxId] = useState<string | undefined>(boxId || chatId)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Load chat history when boxId changes
+  // Load chat history when boxId or chatId changes
   useEffect(() => {
-    if (!boxId) {
+    const effectiveBoxId = chatId || boxId
+    if (!effectiveBoxId) {
       setMessages([])
       setCurrentBoxId(undefined)
       return
@@ -38,17 +42,17 @@ const ChatBox: React.FC<ChatBoxProps> = ({ boxId }) => {
 
     const loadHistory = async () => {
       try {
-        console.log('📥 Loading messages for box:', boxId)
-        const savedMessages = await loadBoxMessages(boxId)
+        console.log('📥 Loading messages for box:', effectiveBoxId)
+        const savedMessages = await loadBoxMessages(effectiveBoxId)
         console.log('✅ Loaded', savedMessages.length, 'messages')
         setMessages(savedMessages)
-        setCurrentBoxId(boxId)
+        setCurrentBoxId(effectiveBoxId)
       } catch (error) {
         console.error('❌ Failed to load box messages:', error)
       }
     }
     loadHistory()
-  }, [boxId])
+  }, [chatId, boxId])
 
   // Save chat history whenever messages change (debounced)
   useEffect(() => {

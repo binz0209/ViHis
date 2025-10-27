@@ -131,6 +131,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
+  text-decoration: none;
+  color: inherit;
 }
 
 .box-item:hover {
@@ -141,14 +143,21 @@
 
 .box-item.active {
   border-color: #2a5298;
-  background: linear-gradient(135deg, rgba(42, 82, 152, 0.15) 0%, rgba(30, 60, 114, 0.15) 100%);
-  box-shadow: 0 2px 8px rgba(42, 82, 152, 0.1);
+  background: linear-gradient(135deg, rgba(42, 82, 152, 0.2) 0%, rgba(30, 60, 114, 0.2) 100%);
+  box-shadow: 0 2px 12px rgba(42, 82, 152, 0.15);
+  border-width: 3px;
 }
 
 .box-name {
   font-weight: 600;
   color: #333;
   margin-bottom: 4px;
+  text-decoration: none;
+}
+
+.box-name.active-name {
+  font-weight: 700;
+  color: #2a5298;
 }
 
 .box-meta {

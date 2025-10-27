@@ -34,6 +34,11 @@ namespace VietHistory.Infrastructure.Mongo
         public IMongoCollection<ChatHistory> ChatHistories => Db.GetCollection<ChatHistory>("chatHistories");
         public IMongoCollection<ChatMessage> ChatMessages => Db.GetCollection<ChatMessage>("chatMessages");
 
+        // ===== Quiz Collections =====
+        public IMongoCollection<Quiz> Quizzes => Db.GetCollection<Quiz>("quizzes");
+        public IMongoCollection<QuizQuestion> QuizQuestions => Db.GetCollection<QuizQuestion>("quizQuestions");
+        public IMongoCollection<QuizAttempt> QuizAttempts => Db.GetCollection<QuizAttempt>("quizAttempts");
+
         public MongoContext(MongoSettings settings)
         {
             if (string.IsNullOrWhiteSpace(settings.ConnectionString))

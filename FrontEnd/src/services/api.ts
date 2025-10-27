@@ -12,13 +12,28 @@ export interface AiAnswer {
   costUsd?: number | null
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://vihisprj-g2gyaehmasbahnff.malaysiawest-01.azurewebsites.net'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+})
+
+// Add machine ID to all requests
+api.interceptors.request.use(config => {
+  let machineId = localStorage.getItem('viet-history-machine-id')
+  if (!machineId) {
+    machineId = `machine-${Date.now()}`
+    localStorage.setItem('viet-history-machine-id', machineId)
+  }
+  
+  if (config.headers) {
+    config.headers['X-Machine-Id'] = machineId
+  }
+  
+  return config
 })
 
 export const sendMessage = async (
@@ -143,6 +158,105 @@ export const getChatBoxes = async (userId?: string, machineId?: string): Promise
 }
 
 export const getApiClient = () => api
+
+// Quiz APIs
+export interface CreateQuizRequest {
+  topic: string
+  multipleChoiceCount: number
+  essayCount: number
+}
+
+export interface QuizQuestionDto {
+  id: string
+  type: string
+  question: string
+  options?: string[] | null
+  correctAnswerIndex?: number | null
+}
+
+export interface QuizDto {
+  id: string
+  creatorId: string
+  topic: string
+  multipleChoiceCount: number
+  essayCount: number
+  questions: QuizQuestionDto[]
+}
+
+export interface SubmitQuizRequest {
+  quizId: string
+  answers: Record<string, string>
+}
+
+export interface QuizAnswerResult {
+  questionId: string
+  isCorrect: boolean
+  userAnswer: string | null
+  correctAnswer: string | null
+}
+
+export interface QuizAttemptDto {
+  id: string
+  quizId: string
+  userId: string
+  score?: number | null
+  totalQuestions: number
+  completedAt?: Date | null
+  answerResults?: QuizAnswerResult[]
+}
+
+export const createQuiz = async (data: CreateQuizRequest): Promise<QuizDto> => {
+  try {
+    const response = await api.post<QuizDto>('/api/v1/quiz/create', data)
+    return response.data
+  } catch (error) {
+    console.error('Create quiz error:', error)
+    throw error
+  }
+}
+
+export const getQuiz = async (quizId: string): Promise<QuizDto> => {
+  try {
+    const response = await api.get<QuizDto>(`/api/v1/quiz/${quizId}`)
+    return response.data
+  } catch (error) {
+    console.error('Get quiz error:', error)
+    throw error
+  }
+}
+
+export const submitQuiz = async (data: SubmitQuizRequest): Promise<QuizAttemptDto> => {
+  try {
+    console.log('📡 API submit data:', data)
+    const response = await api.post<QuizAttemptDto>('/api/v1/quiz/submit', data)
+    console.log('📥 API response:', response.data)
+    return response.data
+  } catch (error) {
+    console.error('❌ Submit quiz error:', error)
+    throw error
+  }
+}
+
+export const getMyQuizzes = async (): Promise<QuizDto[]> => {
+  try {
+    const response = await api.get<QuizDto[]>('/api/v1/quiz/my-quizzes')
+    return response.data
+  } catch (error) {
+    console.error('Get my quizzes error:', error)
+    throw error
+  }
+}
+
+export const getMyAttempt = async (quizId: string): Promise<QuizAttemptDto | null> => {
+  try {
+    const response = await api.get<QuizAttemptDto>(`/api/v1/quiz/${quizId}/my-attempt`)
+    return response.data
+  } catch (error: any) {
+    if (error.response?.status === 404) return null
+    console.error('Get my attempt error:', error)
+    throw error
+  }
+}
 
 export default api
 

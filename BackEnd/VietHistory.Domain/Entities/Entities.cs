@@ -121,3 +121,41 @@ public class ChatHistory : BaseEntity
     [BsonElement("lastMessageAt")] public DateTime LastMessageAt { get; set; } = DateTime.UtcNow;
     [BsonElement("messageIds")] public List<string> MessageIds { get; set; } = new();
 }
+
+public class Quiz : BaseEntity
+{
+    [BsonElement("creatorId")] public string CreatorId { get; set; } = string.Empty;
+    [BsonElement("topic")] public string Topic { get; set; } = string.Empty;
+    [BsonElement("multipleChoiceCount")] public int MultipleChoiceCount { get; set; } = 0;
+    [BsonElement("essayCount")] public int EssayCount { get; set; } = 0;
+    [BsonElement("questions")] public List<EmbeddedQuizQuestion> Questions { get; set; } = new();
+}
+
+public class EmbeddedQuizQuestion
+{
+    [BsonElement("id")] public string Id { get; set; } = string.Empty; // Unique ID for this question in the quiz
+    [BsonElement("type")] public string Type { get; set; } = "multipleChoice"; // "multipleChoice" or "essay"
+    [BsonElement("question")] public string Question { get; set; } = string.Empty;
+    [BsonElement("options")] public List<string> Options { get; set; } = new(); // For multiple choice
+    [BsonElement("correctAnswerIndex")] public int? CorrectAnswerIndex { get; set; } // For multiple choice
+}
+
+public class QuizQuestion : BaseEntity
+{
+    [BsonElement("quizId")] public string QuizId { get; set; } = string.Empty;
+    [BsonElement("type")] public string Type { get; set; } = "multipleChoice"; // "multipleChoice" or "essay"
+    [BsonElement("question")] public string Question { get; set; } = string.Empty;
+    [BsonElement("options")] public List<string> Options { get; set; } = new(); // For multiple choice
+    [BsonElement("correctAnswer")] public string? CorrectAnswer { get; set; } // For multiple choice
+    [BsonElement("correctAnswerIndex")] public int? CorrectAnswerIndex { get; set; } // For multiple choice
+}
+
+public class QuizAttempt : BaseEntity
+{
+    [BsonElement("quizId")] public string QuizId { get; set; } = string.Empty;
+    [BsonElement("userId")] public string UserId { get; set; } = string.Empty;
+    [BsonElement("answers")] public Dictionary<string, string> Answers { get; set; } = new(); // questionId -> answer
+    [BsonElement("score")] public int? Score { get; set; } // Calculated score
+    [BsonElement("totalQuestions")] public int TotalQuestions { get; set; } = 0;
+    [BsonElement("completedAt")] public DateTime? CompletedAt { get; set; }
+}

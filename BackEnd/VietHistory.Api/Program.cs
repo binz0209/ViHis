@@ -71,6 +71,15 @@ builder.Services.AddScoped(sp =>
 builder.Services.AddHttpClient<IAIStudyService, GeminiStudyService>(c => c.Timeout = TimeSpan.FromSeconds(60));
 builder.Services.AddScoped<IAIStudyService, GeminiStudyService>();
 
+// Quiz Generation Service - pass GeminiOptions from singleton
+builder.Services.AddHttpClient<QuizGenerationService>(c => c.Timeout = TimeSpan.FromSeconds(60));
+builder.Services.AddScoped(sp => 
+{
+    var http = sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(QuizGenerationService));
+    var opt = sp.GetRequiredService<GeminiOptions>();
+    return new QuizGenerationService(http, opt);
+});
+
 // Register KWideRetriever with EmbeddingService (if available)
 builder.Services.AddScoped(sp =>
 {
@@ -88,6 +97,7 @@ builder.Services.AddSingleton<IFallbackAIngestor, FallbackAIngestor>();
 // ================= App services (domain) =================
 builder.Services.AddScoped<IPeopleService, PeopleService>();
 builder.Services.AddScoped<IEventsService, EventsService>();
+builder.Services.AddScoped<IQuizService, QuizService>();
 
 // ================= JWT Authentication =================
 var jwtOptions = new JwtOptions
