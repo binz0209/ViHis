@@ -285,7 +285,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ boxId }) => {
         <div className="messages">
           {messages.length === 0 && (
             <div className="welcome-message">
-              <h2>Chào mừng đến với VietHistory! 🎓</h2>
+              <h2>Chào mừng đến với ViHis! 🎓</h2>
               <p>Bạn có thể đặt câu hỏi về lịch sử Việt Nam tại đây.</p>
               <div className="example-questions">
                 <p>Ví dụ:</p>

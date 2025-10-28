@@ -267,10 +267,10 @@ a.tab:hover {
   /* Mobile menu button */
   .mobile-menu-btn {
     display: block;
-    position: fixed;
-    top: 70px;
-    left: 12px;
-    z-index: 50;
+    position: absolute;
+    top: -55px;
+    left: 8px;
+    z-index: 1000;
     background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
     border: none;
     border-radius: 12px;
@@ -295,12 +295,15 @@ a.tab:hover {
   .chat-selector-wrapper {
     position: fixed;
     left: -100%;
-    top: 80px;
+    top: 60px;
     bottom: 0;
     width: 280px;
-    z-index: 60;
+    z-index: 1001;
     transition: left 0.3s ease;
     will-change: left;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
   }
 
   .chat-selector-wrapper.active {
@@ -311,12 +314,12 @@ a.tab:hover {
   .mobile-menu-overlay.active {
     display: block;
     position: fixed;
-    top: 80px;
+    top: 60px;
     left: 0;
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 999;
+    z-index: 1000;
     backdrop-filter: blur(4px);
   }
 
@@ -326,12 +329,12 @@ a.tab:hover {
     width: 100%;
     height: 100%;
     position: relative;
-    padding-top: 0; /* No padding needed */
+    padding-top: 0;
   }
   
   .chat-box-container {
     width: 100%;
-    height: calc(100% - 120px); /* Adjust to fit below header and tabs */
+    height: 100%;
   }
 
   .tabs {
