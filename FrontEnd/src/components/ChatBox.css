@@ -371,8 +371,15 @@
 }
 
 @media (max-width: 768px) {
+  .chat-box-container {
+    padding: 0;
+    height: 100%;
+  }
+  
   .chat-box {
     border-radius: 16px;
+    max-height: 100%;
+    overflow: hidden;
   }
 
   .chat-header {

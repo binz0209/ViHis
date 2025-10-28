@@ -326,7 +326,12 @@ a.tab:hover {
     width: 100%;
     height: 100%;
     position: relative;
-    padding-top: 60px; /* Make room for mobile menu button */
+    padding-top: 0; /* No padding needed */
+  }
+  
+  .chat-box-container {
+    width: 100%;
+    height: calc(100% - 120px); /* Adjust to fit below header and tabs */
   }
 
   .tabs {
