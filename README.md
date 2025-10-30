@@ -23,6 +23,18 @@ This project implements **AI-assisted unit testing** for a Vietnamese History Q&
 
 ---
 
+## 🔗 Quick Links (Test Plans & Logs)
+- Test Plans:
+  - `tests/AI_QA_TEST_PLAN.md`
+  - `tests/AUTH_JWT_TEST_PLAN.md`
+  - `tests/QUIZ_TEST_PLAN.md`
+- Prompt Logs:
+  - `prompts/logs/AI_QA_PROMPTS.md`
+  - `prompts/logs/AUTH_PROMPTS.md`
+  - `prompts/logs/QUIZ_PROMPTS.md`
+
+---
+
 ## 🛠️ Tech Stack
 
 ### Production Code
@@ -147,100 +159,6 @@ Package: VietHistory.AI
    - Enterprise-level quality assurance
 
 **✅ Final Coverage = 90%+ (comprehensive real API testing)**
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- **.NET SDK 8.0+** installed
-- **MongoDB Atlas** connection string (for integration tests)
-- **Gemini API key** (for integration tests)
-
-### 1. Clone Repository
-
-```bash
-git clone <repository-url>
-cd ViHis
-```
-
-### 2. Run Unit Tests (Daily Development)
-
-```bash
-cd BackEnd
-dotnet test VietHistory.AI.Tests --verbosity normal
-```
-
-**Output:**
-```
-Total tests: 43
-     Passed: 43
-    Skipped: 0
- Total time: ~5s ⚡
-```
-
-### 3. Run with Coverage
-
-```bash
-dotnet test VietHistory.AI.Tests --collect:"XPlat Code Coverage" --results-directory ./TestResults
-```
-
-### 4. Generate HTML Coverage Report (Optional)
-
-```bash
-# Install tool (one-time)
-dotnet tool install -g dotnet-reportgenerator-globaltool
-
-# Generate HTML report
-reportgenerator -reports:"TestResults/*/coverage.cobertura.xml" \
-                -targetdir:"../coverage" \
-                -reporttypes:Html
-
-# Open in browser
-open ../coverage/index.html
-```
-
-### 5. Run Integration Tests (Manual, Before Deployment)
-
-**Prerequisites**: Valid credentials in `tests/config-credentials.md`
-
-```bash
-# Step 1: Un-skip integration tests
-# Edit: BackEnd/VietHistory.AI.Tests/GeminiStudyServiceIntegrationTests.cs
-# Change: [Fact(Skip = "...")] → [Fact]
-
-# Step 2: Run integration tests
-dotnet test VietHistory.AI.Tests --filter "Category=Integration"
-
-# Step 3: Re-skip after testing (to avoid API quota usage)
-```
-
-### 6. Final Testing Results ✅
-
-**🎉 HOÀN THÀNH 100% YÊU CẦU CUỘC THI!**
-
-```bash
-# BƯỚC 1: Chạy tất cả tests (unit + integration)
-cd BackEnd
-dotnet test --collect:"XPlat Code Coverage"
-# Kết quả: 90%+ line coverage ✅
-```
-
-**Final Results**:
-- ✅ **43 test cases** (vượt mức tối thiểu 15 - +187%)
-- ✅ **43/43 tests PASSED** (100% pass rate)
-- ✅ **8 integration tests PASSED** (Real APIs working)
-- ✅ **90%+ coverage** (vượt mức 85%)
-- ✅ **Real API integration** với Gemini 2.5 Flash + MongoDB Atlas
-
-**Talking Points cho BGK**:
-- ✅ **43/43 tests PASSED** (100% pass rate)
-- ✅ **8/8 integration tests PASSED** (Real APIs working)
-- ✅ **90%+ coverage** (vượt mức 85%)
-- ✅ **Real API integration** với Gemini 2.5 Flash + MongoDB Atlas
-- ✅ **Professional documentation** với interactive dashboards
-- ✅ **Competition requirements 100% satisfied**
 
 ---
 
@@ -466,4 +384,26 @@ This is a student project for AI4SE competition.
 **Testing Framework**: xUnit + FluentAssertions + Real APIs  
 **AI-Assisted**: Yes (Claude Sonnet 4.5)  
 **Status**: ✅ **COMPETITION READY**
+
+---
+
+## 📈 Coverage HTML (Open Quickly)
+```bash
+# Generate HTML from Cobertura
+cd BackEnd
+reportgenerator -reports:"TestResults/*/coverage.cobertura.xml" -targetdir:"../coverage" -reporttypes:Html
+open ../coverage/index.html
+```
+
+---
+
+## 📝 How to Filter Tests by Tags
+```bash
+# Only integration tests
+cd BackEnd
+dotnet test VietHistory.AI.Tests --filter "Integration=Real"
+
+# Only AI_QA feature
+dotnet test VietHistory.AI.Tests --filter "Feature=AI_QA"
+```
 
