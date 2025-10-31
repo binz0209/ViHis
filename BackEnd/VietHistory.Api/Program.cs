@@ -7,7 +7,9 @@ using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 using VietHistory.Infrastructure.Services.Gemini;
 using VietHistory.Application.Services;
+using VietHistory.Domain.Repositories;
 using VietHistory.Infrastructure.Mongo;
+using VietHistory.Infrastructure.Mongo.Repositories;
 using VietHistory.Infrastructure.Services;
 using VietHistory.Infrastructure.Services.AI;
 using VietHistory.Infrastructure.Services.TextIngest;
@@ -57,7 +59,7 @@ builder.Services.AddSingleton(geminiOptions);
 var embeddingApiKey = builder.Configuration["Gemini:ApiKey"] ?? "";
 var embeddingModel = builder.Configuration["Gemini:EmbeddingModel"] ?? "text-embedding-004";
 builder.Services.AddHttpClient<EmbeddingService>(c => c.Timeout = TimeSpan.FromSeconds(60));
-builder.Services.AddScoped(sp =>
+builder.Services.AddScoped<EmbeddingService?>(sp =>
 {
     if (!string.IsNullOrEmpty(embeddingApiKey))
     {
@@ -65,11 +67,19 @@ builder.Services.AddScoped(sp =>
         var http = httpFactory.CreateClient(nameof(EmbeddingService));
         return new EmbeddingService(http, embeddingApiKey, embeddingModel);
     }
-    return null as EmbeddingService;
+    return null;
 });
 
 builder.Services.AddHttpClient<IAIStudyService, GeminiStudyService>(c => c.Timeout = TimeSpan.FromSeconds(60));
-builder.Services.AddScoped<IAIStudyService, GeminiStudyService>();
+builder.Services.AddScoped<IAIStudyService, GeminiStudyService>(sp =>
+{
+    var httpFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var http = httpFactory.CreateClient(nameof(GeminiStudyService));
+    var opt = sp.GetRequiredService<GeminiOptions>();
+    var ctx = sp.GetRequiredService<IMongoContext>();
+    var retriever = sp.GetRequiredService<KWideRetriever>();
+    return new GeminiStudyService(http, opt, ctx, retriever);
+});
 
 // Quiz Generation Service - pass GeminiOptions from singleton
 builder.Services.AddHttpClient<QuizGenerationService>(c => c.Timeout = TimeSpan.FromSeconds(60));
@@ -95,8 +105,6 @@ builder.Services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();
 builder.Services.AddSingleton<IFallbackAIngestor, FallbackAIngestor>();
 
 // ================= App services (domain) =================
-builder.Services.AddScoped<IPeopleService, PeopleService>();
-builder.Services.AddScoped<IEventsService, EventsService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 
 // ================= JWT Authentication =================

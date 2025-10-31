@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using VietHistory.Domain.Entities;
 using VietHistory.Infrastructure.Mongo;
-using VietHistory.Application.DTOs.Ingest;
 
 namespace VietHistory.Api.Controllers;
 

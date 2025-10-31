@@ -3,7 +3,10 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using VietHistory.Api.Controllers.Forms;
 using VietHistory.Application.DTOs.Ingest;
+using VietHistory.Domain.Entities;
+using VietHistory.Domain.Repositories;
 using VietHistory.Infrastructure.Mongo;
+using VietHistory.Infrastructure.Mongo.Repositories;
 using VietHistory.Infrastructure.Services.TextIngest;
 
 namespace VietHistory.Api.Controllers;
