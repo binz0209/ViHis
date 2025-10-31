@@ -12,7 +12,7 @@ Tài liệu này là prompt mẫu HOÀN CHỈNH, áp dụng trực tiếp cho d�
 
 ## Phase 1 – Testing Specification (Analysis & Selection)
 Context:
-- Dự án ViHis (.NET 8, xUnit, FluentAssertions). Kiến trúc nhiều lớp như trên. Các feature trọng tâm: AI_QA (Gemini), AUTH_JWT, GEN_QUIZ.
+- Dự án ViHis (.NET 8, xUnit, FluentAssertions). Kiến trúc nhiều lớp như trên. Các feature trọng tâm: AUTH_JWT, GEN_QUIZ, AI_QA (Gemini), CHAT, TEXT_INGEST.
 
 Role:
 - Expert software test engineer & prompt engineer.
@@ -140,26 +140,67 @@ Nội dung:
 ## Feature Guides (áp dụng cho ViHis)
 
 ### A) AUTH_JWT
-- Endpoints: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `GET /api/v1/auth/me`, `POST /api/v1/auth/change-password`.
-- Real Mongo + `JwtService`. Test 401/403/404, claim/expiry/issuer/audience, đổi mật khẩu.
-- Chú ý hành vi hiện tại: thiếu token ở change-password đang 404 (ghi nhận nếu chưa đổi policy).
+- **Endpoints**: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `GET /api/v1/auth/me`, `POST /api/v1/auth/change-password`.
+- **Architecture**: Controller → `JwtService` → MongoDB. Có Service Layer → Có Unit Tests.
+- **Dependencies**: Real MongoDB + `JwtService` (logic phức tạp: generate token, validate token, hash password).
+- **Test Focus**: 401/403/404, claim/expiry/issuer/audience, đổi mật khẩu, duplicate registration, invalid credentials.
+- **Chú ý**: Thiếu token ở change-password đang 404 (ghi nhận nếu chưa đổi policy).
 
 ### B) GEN_QUIZ
-- Endpoints: create/get/submit/my-quizzes/my-attempt.
-- Service: `QuizService` (Mongo `Quizzes`, `QuizAttempts`), có `QuizGenerationService` placeholder.
-- Scoring: MCQ tự động; essay không chấm điểm; đảm bảo ổn định thứ tự câu hỏi và multi-submit.
+- **Endpoints**: `POST /api/v1/quiz/create`, `GET /api/v1/quiz/{id}`, `POST /api/v1/quiz/submit`, `GET /api/v1/quiz/my-quizzes`, `GET /api/v1/quiz/my-attempts`.
+- **Architecture**: Controller → `QuizService` → `QuizGenerationService` → MongoDB/Gemini API.
+- **Dependencies**: Real MongoDB, Real Gemini API (quiz generation). Có Service Layer → Có Unit Tests.
+- **Test Focus**: MCQ tự động scoring; essay không chấm điểm; ổn định thứ tự câu hỏi; multi-submit; invalid quiz IDs.
+- **Chú ý**: `QuizGenerationService` gọi Gemini API thật để generate questions.
 
 ### C) AI_QA (Gemini)
-- Service: `GeminiStudyService` (HTTP → Gemini + retriever Mongo). Real API có thể 429 → chấp nhận retry/backoff, hoặc đánh dấu “current behavior”.
-- Assertions: từ khóa lịch sử, chiều dài tối thiểu, thời gian < ngưỡng mềm.
+- **Endpoints**: `POST /api/v1/ai/ask`.
+- **Architecture**: Controller → `GeminiStudyService` → Gemini API + MongoDB RAG (KWideRetriever).
+- **Dependencies**: Real Gemini API, Real MongoDB (RAG retrieval). **Có thể bị rate limit 429**.
+- **Test Focus**: Vietnamese/English/French questions; RAG context; web fallback; từ khóa lịch sử; chiều dài tối thiểu; P95 < 15s.
+- **Chú ý**: Real API có thể 429 → chấp nhận retry/backoff, hoặc đánh dấu "current behavior" cho failed tests.
+
+### D) CHAT
+- **Endpoints**: `GET /api/v1/chat/boxes`, `POST /api/v1/chat/history`, `GET /api/v1/chat/history/{boxId}`, `PUT /api/v1/chat/history/{boxId}/name`, `DELETE /api/v1/chat/history/{boxId}`.
+- **Architecture**: Controller → MongoDB (trực tiếp, **KHÔNG có Service Layer**). Chỉ có Integration Tests.
+- **Dependencies**: Real MongoDB only. Logic đơn giản (CRUD operations) → Không cần Unit Tests.
+- **Test Focus**: GetChatBoxes với userId/machineId; SaveHistory (create new/update existing); cascade delete messages; GetHistory với sorting; RenameBox; DeleteBox idempotent.
+- **Chú ý**: `GetHistory` không found → 200 OK với empty messages (không phải 404). `DeleteBox` idempotent → 200 OK kể cả khi boxId không tồn tại.
+
+### E) TEXT_INGEST
+- **Endpoints**: `POST /api/v1/ingest/preview`, `POST /api/v1/ingest/pdf`, `GET /api/v1/ingest/chunks`, `GET /api/v1/ingest/sources`, `GET /api/v1/ingest/source/{id}`.
+- **Architecture**: Controller → `FallbackAIngestor` → TextNormalizer/HeaderFooterDetector/SentenceTokenizer/ChunkPack/PdfTextExtractor → MongoDB + Gemini Embedding API.
+- **Dependencies**: Real MongoDB, Real Gemini Embedding API (cho embeddings), PdfPig library (PDF parsing). Có nhiều Service Layers → Có Unit Tests (35 tests).
+- **Test Focus**: PDF text extraction; normalization (CRLF, hyphen breaks, spaced letters); header/footer detection; sentence tokenization; chunk packing với overlap; embedding generation; pagination; invalid ObjectId format.
+- **Chú ý**: Gemini Embedding API có thể rate limit; preview endpoint không lưu DB (chỉ preview 10 chunks đầu); IngestAndSave lưu Source + Chunks với embeddings vào MongoDB.
 
 ---
 
 ## Lệnh nhanh
-```
+
+### Chạy test theo feature
+```bash
 cd BackEnd
-dotnet test --filter "Feature=AUTH_JWT|GEN_QUIZ|AI_QA" -v minimal
+dotnet test --filter "Feature=AUTH_JWT" -v minimal
+dotnet test --filter "Feature=GEN_QUIZ" -v minimal
+dotnet test --filter "Feature=AI_QA" -v minimal
+dotnet test --filter "Feature=CHAT" -v minimal
+dotnet test --filter "Feature=TEXT_INGEST" -v minimal
+```
+
+### Chạy tất cả tests
+```bash
+cd BackEnd
+dotnet test --filter "Feature=AUTH_JWT|GEN_QUIZ|AI_QA|CHAT|TEXT_INGEST" -v minimal
+```
+
+### Chạy test với coverage và generate HTML report
+```bash
+cd BackEnd
+# Bước 1: Chạy test với coverage
 dotnet test --collect:"XPlat Code Coverage" -v minimal || true
+
+# Bước 2: Generate HTML report
 export PATH="$PATH:$HOME/.dotnet/tools"
 reportgenerator -reports:"**/coverage.cobertura.xml" -targetdir:"coveragereport-final" "-reporttypes:Html;HtmlSummary"
 open coveragereport-final/index.html
