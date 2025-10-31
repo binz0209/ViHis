@@ -4,6 +4,7 @@ using System.IO;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 using VietHistory.Application.DTOs.Ingest;
+using VietHistory.Domain.Entities;
 using PdfDocument = UglyToad.PdfPig.PdfDocument;
 
 namespace VietHistory.Infrastructure.Services.TextIngest

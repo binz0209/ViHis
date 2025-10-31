@@ -1,7 +1,6 @@
 using MongoDB.Bson;
 using MongoDB.Driver;
 using VietHistory.Domain.Entities;
-using VietHistory.Application.DTOs.Ingest;
 
 namespace VietHistory.Infrastructure.Mongo
 {
@@ -13,18 +12,8 @@ namespace VietHistory.Infrastructure.Mongo
         public IMongoDatabase Db { get; }
 
         // ===== Các collection chính trong hệ thống =====
-        public IMongoCollection<Period> Periods => Db.GetCollection<Period>("periods");
-        public IMongoCollection<Dynasty> Dynasties => Db.GetCollection<Dynasty>("dynasties");
-        public IMongoCollection<Person> People => Db.GetCollection<Person>("people");
-        public IMongoCollection<Event> Events => Db.GetCollection<Event>("events");
-        public IMongoCollection<Place> Places => Db.GetCollection<Place>("places");
-        public IMongoCollection<Battle> Battles => Db.GetCollection<Battle>("battles");
-        public IMongoCollection<Source> SourcesLegacy => Db.GetCollection<Source>("sources_legacy"); // dữ liệu cũ (Entity)
-        public IMongoCollection<Media> Media => Db.GetCollection<Media>("media");
         public IMongoCollection<AppUser> Users => Db.GetCollection<AppUser>("users");
         public IMongoCollection<AppRole> Roles => Db.GetCollection<AppRole>("roles");
-        public IMongoCollection<Bookmark> Bookmarks => Db.GetCollection<Bookmark>("bookmarks");
-        public IMongoCollection<AuditLog> AuditLogs => Db.GetCollection<AuditLog>("auditLogs");
 
         // ===== Các collection phục vụ AI ingest (PDFs, fine-tune data) =====
         public IMongoCollection<SourceDoc> Sources => Db.GetCollection<SourceDoc>("sources");
@@ -36,7 +25,6 @@ namespace VietHistory.Infrastructure.Mongo
 
         // ===== Quiz Collections =====
         public IMongoCollection<Quiz> Quizzes => Db.GetCollection<Quiz>("quizzes");
-        public IMongoCollection<QuizQuestion> QuizQuestions => Db.GetCollection<QuizQuestion>("quizQuestions");
         public IMongoCollection<QuizAttempt> QuizAttempts => Db.GetCollection<QuizAttempt>("quizAttempts");
 
         public MongoContext(MongoSettings settings)

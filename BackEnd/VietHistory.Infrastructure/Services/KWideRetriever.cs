@@ -3,6 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using VietHistory.Application.DTOs.Ingest;
+using VietHistory.Domain.Entities;
 using VietHistory.Infrastructure.Mongo;
 
 namespace VietHistory.Infrastructure.Services.AI

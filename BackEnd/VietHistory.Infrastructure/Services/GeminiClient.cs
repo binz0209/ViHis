@@ -10,6 +10,7 @@ using VietHistory.Application.DTOs;
 using VietHistory.Application.Services;
 using VietHistory.Infrastructure.Mongo;
 using VietHistory.Application.DTOs.Ingest;
+using VietHistory.Domain.Entities;
 using VietHistory.Infrastructure.Services.AI;
 
 namespace VietHistory.Infrastructure.Services.Gemini;

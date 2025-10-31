@@ -2,6 +2,8 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using VietHistory.Application.DTOs.Ingest;
+using VietHistory.Domain.Entities;
+using VietHistory.Domain.Repositories;
 using VietHistory.Infrastructure.Mongo;
 using VietHistory.Infrastructure.Services.Gemini;
 

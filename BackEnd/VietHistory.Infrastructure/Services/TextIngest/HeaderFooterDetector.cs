@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using VietHistory.Application.DTOs.Ingest;
+using VietHistory.Domain.Entities;
 
 namespace VietHistory.Infrastructure.Services.TextIngest
 {
