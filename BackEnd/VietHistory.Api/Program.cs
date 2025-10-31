@@ -82,12 +82,12 @@ builder.Services.AddScoped<IAIStudyService, GeminiStudyService>(sp =>
 });
 
 // Quiz Generation Service - pass GeminiOptions from singleton
-builder.Services.AddHttpClient<QuizGenerationService>(c => c.Timeout = TimeSpan.FromSeconds(60));
+builder.Services.AddHttpClient<VietHistory.Infrastructure.Services.QuizGenerationService>(c => c.Timeout = TimeSpan.FromSeconds(60));
 builder.Services.AddScoped(sp => 
 {
-    var http = sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(QuizGenerationService));
+    var http = sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(VietHistory.Infrastructure.Services.QuizGenerationService));
     var opt = sp.GetRequiredService<GeminiOptions>();
-    return new QuizGenerationService(http, opt);
+    return new VietHistory.Infrastructure.Services.QuizGenerationService(http, opt);
 });
 
 // Register KWideRetriever with EmbeddingService (if available)

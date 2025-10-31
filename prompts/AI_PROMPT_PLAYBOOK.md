@@ -4,7 +4,7 @@ Tài liệu này là prompt mẫu HOÀN CHỈNH, áp dụng trực tiếp cho d�
 
 ---
 
-## Architecture (chuẩn ViHis)
+## Architecture
 - Runtime flow: FrontEnd (React) → HTTP → VietHistory.Api (Controllers) → VietHistory.Application (Services/DTO) → VietHistory.Domain (Entities/Rules) → VietHistory.Infrastructure (Mongo/JWT/AI) → MongoDB | Gemini → quay về API → FE.
 - Dependency direction: Api → Application → Domain ← Infrastructure (implements interfaces).  Không trả Domain Entity trực tiếp ra ngoài; dùng DTO.
 
@@ -71,17 +71,42 @@ Acceptance (Phase 2):
 
 ---
 
-## Phase 3 – Test Code Generation (xUnit + FluentAssertions)
+## Phase 3 – Test Code Generation (xUnit + FluentAssertions + AAA Pattern)
 Role: Expert .NET test engineer.
 
 Requirements:
 - .NET 8, xUnit, FluentAssertions. Không thêm framework ngoài nếu không cần.
+- **BẮT BUỘC**: Mỗi test method PHẢI dùng **Arrange-Act-Assert (AAA)** pattern với comments rõ ràng:
+  ```csharp
+  [Fact]
+  public async Task TC01_MethodName_Given_When_Then()
+  {
+      // Arrange - Setup test data, mocks, dependencies
+      var testData = ...;
+      await _repository.InsertAsync(testData);
+      
+      // Act - Execute the code under test
+      var result = await _controller.MethodUnderTest(...);
+      
+      // Assert - Verify the outcome
+      result.Should().NotBeNull();
+      result.StatusCode.Should().Be(200);
+  }
+  ```
+- **Lưu ý**: Phase 2 (Design) dùng **Given-When-Then (GWT)** cho documentation, nhưng Phase 3 (Code) **BẮT BUỘC** dùng **AAA** cho implementation. Đây là .NET industry standard.
 - Ưu tiên Integration Real cho AUTH_JWT, GEN_QUIZ (Mongo/JWT thật). AI_QA có thể bị rate-limit 429: cho phép backoff/accept retry-friendly assertions.
-- Mỗi TC là một `[Fact]` độc lập, tên hàm theo `TCxx_Given_When_Then`.
+- Mỗi TC là một `[Fact]` độc lập, tên hàm theo `TCxx_Given_When_Then` (GWT format cho method name, nhưng code structure dùng AAA).
 - Không ghi secrets mới; đọc cấu hình từ ENV/launchSettings khi cần.
+
+Code Structure Requirements:
+- **Arrange section**: Khởi tạo objects, mocks, test data, setup dependencies. Phải có comment `// Arrange` kèm mô tả ngắn.
+- **Act section**: Gọi method/endpoint under test. Phải có comment `// Act`.
+- **Assert section**: Verify kết quả bằng FluentAssertions. Phải có comment `// Assert`.
+- Không trộn lẫn Arrange/Act/Assert trong cùng một section.
 
 Output:
 - Mã C# test hoàn chỉnh (biên dịch được), đặt vào `BackEnd/VietHistory.AI.Tests/*.cs` tương ứng.
+- **Tất cả test methods phải có AAA structure rõ ràng**.
 
 ---
 

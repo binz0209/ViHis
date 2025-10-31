@@ -23,7 +23,12 @@ public class QuizService : IQuizService
 
     public async Task<QuizDto> CreateQuizAsync(string creatorId, CreateQuizRequest req)
     {
-        // Generate quiz questions using AI
+        if (req == null) throw new ArgumentNullException(nameof(req));
+        if (string.IsNullOrWhiteSpace(req.Topic)) throw new ArgumentException("Topic is required", nameof(req.Topic));
+        if (req.MultipleChoiceCount < 0 || req.EssayCount < 0) throw new ArgumentException("Counts must be >= 0");
+        if (req.MultipleChoiceCount + req.EssayCount == 0) throw new ArgumentException("At least one question required");
+
+        // Generate quiz questions using AI (placeholder or Gemini-based)
         var questions = await _quizGenerator.GenerateQuizQuestionsAsync(
             req.Topic,
             req.MultipleChoiceCount,
@@ -128,13 +133,14 @@ public class QuizService : IQuizService
             }
         }
 
+        var totalMcq = quiz.Questions.Count(q => q.Type == "multipleChoice");
         var attempt = new QuizAttempt
         {
             QuizId = req.QuizId,
             UserId = userId,
-            Answers = req.Answers,
+            Answers = req.Answers ?? new Dictionary<string, string>(),
             Score = score,
-            TotalQuestions = quiz.Questions.Count,
+            TotalQuestions = totalMcq,
             CompletedAt = DateTime.UtcNow
         };
 

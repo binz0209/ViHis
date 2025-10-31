@@ -26,7 +26,7 @@ Scope: Phân tích feature GEN_QUIZ theo template Phase 1 hợp nhất; liệt k
 
 3. GET `api/v1/quiz/{quizId}` – GetQuiz (Medium)
    - Main purpose: Lấy đầy đủ quiz theo id.
-   - Inputs: `quizId:string`.
+- Inputs: `quizId:string`.
    - Returns: `QuizDto` với danh sách `questions`.
    - Dependencies: Mongo `Quizzes`; `IQuizService.GetQuizAsync`.
    - Logic branches: tồn tại/không tồn tại; (malformed id hiện tại được Mongo ném FormatException trước controller – ghi nhận).

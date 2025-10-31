@@ -25,7 +25,10 @@ namespace VietHistory.AI.Tests
                 Database = "vihis_test"
             };
             _mongo = new MongoContext(mongoSettings);
-            _service = new QuizService(_mongo);
+            var http = new System.Net.Http.HttpClient();
+            var opt = new VietHistory.Infrastructure.Services.Gemini.GeminiOptions { ApiKey = "", Model = "" };
+            var generator = new QuizGenerationService(http, opt);
+            _service = new QuizService((MongoContext)_mongo, generator);
         }
 
         [Fact]
