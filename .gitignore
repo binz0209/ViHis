@@ -1,15 +1,10 @@
 ############################################
 # 🔐 CREDENTIALS - NEVER COMMIT!
 ############################################
+tests/config-credentials.md
 **/.env
-**/.env.*
-**/.env.local
-**/.env.production
 **/.env.test
-**/appsettings.json
-**/appsettings.*.json
-!**/appsettings.example.json
-secrets.json
+**/appsettings.Test.json
 
 ############################################
 # 🧩 OS chung
