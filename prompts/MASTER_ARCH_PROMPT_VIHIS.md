@@ -1,4 +1,4 @@
-# Master Architectural Prompt – ViHis (Chuẩn Senior)
+# Master Architectural Prompt – ViHis
 
 Dùng prompt này để định hướng thiết kế/kiểm thử/triển khai cho ViHis (.NET 8 + MongoDB + React/Vite), thay cho các mẫu không phù hợp (EF/SQLite/Minimal API).
 
