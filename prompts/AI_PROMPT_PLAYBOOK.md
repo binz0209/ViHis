@@ -1,4 +1,4 @@
-# ViHis – AI-Assisted Testing Playbook (Chuẩn Senior)
+# ViHis – AI-Assisted Testing Playbook 
 
 Tài liệu này là prompt mẫu HOÀN CHỈNH, áp dụng trực tiếp cho dự án ViHis (.NET 8 + MongoDB + React). Dùng cho cả phân tích, thiết kế test, sinh test code, chạy & debug, tối ưu coverage, và tài liệu hóa theo 6 phase.
 
